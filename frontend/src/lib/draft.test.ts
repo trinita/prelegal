@@ -1,8 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearDraft, loadDraft, saveDraft } from "./draft";
-import { defaultValues } from "./fields";
+import { defaultValues, type MndaValues } from "./fields";
+import { emptyWorkspace, startDocument } from "./workspace";
+import { MUTUAL_NDA_ID } from "./documents";
 
-const KEY = "prelegal.mnda.draft.v1";
+const KEY = "prelegal.draft.v2";
+const LEGACY_KEY = "prelegal.mnda.draft.v1";
+
+/** A Mutual NDA workspace, which is what most of these tests are about. */
+const mnda = (overrides: Record<string, unknown> = {}) => ({
+  documentId: MUTUAL_NDA_ID,
+  values: { ...defaultValues(), ...overrides },
+});
 
 /** A minimal localStorage, so the browser-only paths can be exercised. */
 function useStorage(overrides: Partial<Storage> = {}) {
@@ -22,77 +31,107 @@ afterEach(() => {
 });
 
 describe("without a browser", () => {
-  it("falls back to defaults when there is no window", () => {
-    expect(loadDraft()).toEqual(defaultValues());
+  it("falls back to an empty workspace when there is no window", () => {
+    expect(loadDraft()).toEqual(emptyWorkspace());
   });
 });
 
 describe("round trip", () => {
   it("restores what was saved", () => {
     useStorage();
-    const values = { ...defaultValues(), governingLaw: "Delaware" };
+    const workspace = mnda({ governingLaw: "Delaware" });
 
-    saveDraft(values);
+    saveDraft(workspace);
 
-    expect(loadDraft()).toEqual(values);
+    expect(loadDraft()).toEqual(workspace);
   });
 
-  it("returns defaults when nothing has been saved", () => {
+  it("restores a document that is not the Mutual NDA", () => {
     useStorage();
-    expect(loadDraft()).toEqual(defaultValues());
+    const workspace = { documentId: "pilot-agreement", values: { provider: "Acme" } };
+
+    saveDraft(workspace);
+
+    expect(loadDraft()).toEqual(workspace);
+  });
+
+  it("returns an empty workspace when nothing has been saved", () => {
+    useStorage();
+    expect(loadDraft()).toEqual(emptyWorkspace());
   });
 
   it("forgets the draft when cleared", () => {
     const { store } = useStorage();
-    saveDraft({ ...defaultValues(), jurisdiction: "New Castle, DE" });
+    saveDraft(mnda({ jurisdiction: "New Castle, DE" }));
 
     clearDraft();
 
     expect(store.has(KEY)).toBe(false);
-    expect(loadDraft()).toEqual(defaultValues());
+    expect(loadDraft()).toEqual(emptyWorkspace());
+  });
+
+  it("does not carry one document's answers into another", () => {
+    useStorage();
+    saveDraft(startDocument("pilot-agreement"));
+
+    expect(loadDraft().values).toEqual({});
   });
 });
 
 describe("drafts saved by an older version", () => {
-  it("fills in fields the stored draft does not have", () => {
+  it("reads a draft from before there was more than one document", () => {
+    // v1 stored the Mutual NDA's values bare, with no document id.
     const { store } = useStorage();
-    store.set(KEY, JSON.stringify({ governingLaw: "Delaware" }));
+    store.set(LEGACY_KEY, JSON.stringify({ governingLaw: "Delaware" }));
 
     const loaded = loadDraft();
 
-    expect(loaded.governingLaw).toBe("Delaware");
+    expect(loaded.documentId).toBe(MUTUAL_NDA_ID);
+    expect((loaded.values as Record<string, string>).governingLaw).toBe("Delaware");
+  });
+
+  it("fills in fields the stored draft does not have", () => {
+    const { store } = useStorage();
+    store.set(KEY, JSON.stringify(mnda({ governingLaw: "Delaware" })));
+
+    const values = loadDraft().values as MndaValues;
+
+    expect(values.governingLaw).toBe("Delaware");
     // Everything absent from the draft comes from the defaults.
-    expect(loaded.purpose).toBe(defaultValues().purpose);
-    expect(loaded.partyOne).toEqual(defaultValues().partyOne);
+    expect(values.purpose).toBe(defaultValues().purpose);
+    expect(values.partyOne).toEqual(defaultValues().partyOne);
   });
 
   it("merges a partially stored party rather than replacing it", () => {
     const { store } = useStorage();
-    store.set(KEY, JSON.stringify({ partyOne: { company: "Acme" } }));
+    store.set(
+      KEY,
+      JSON.stringify({ documentId: MUTUAL_NDA_ID, values: { partyOne: { company: "Acme" } } }),
+    );
 
-    const loaded = loadDraft();
+    const values = loadDraft().values as MndaValues;
 
-    expect(loaded.partyOne.company).toBe("Acme");
-    expect(loaded.partyOne.printName).toBe("");
+    expect(values.partyOne.company).toBe("Acme");
+    expect(values.partyOne.printName).toBe("");
   });
 });
 
 describe("when storage misbehaves", () => {
-  it("falls back to defaults if the stored draft is not valid JSON", () => {
+  it("falls back to an empty workspace if the stored draft is not valid JSON", () => {
     const { store } = useStorage();
     store.set(KEY, "{ not json");
 
-    expect(loadDraft()).toEqual(defaultValues());
+    expect(loadDraft()).toEqual(emptyWorkspace());
   });
 
-  it("falls back to defaults if reading throws", () => {
+  it("falls back to an empty workspace if reading throws", () => {
     useStorage({
       getItem: () => {
         throw new Error("site data blocked");
       },
     });
 
-    expect(loadDraft()).toEqual(defaultValues());
+    expect(loadDraft()).toEqual(emptyWorkspace());
   });
 
   it("does not throw if saving fails, so the form keeps working", () => {
@@ -102,7 +141,7 @@ describe("when storage misbehaves", () => {
       },
     });
 
-    expect(() => saveDraft(defaultValues())).not.toThrow();
+    expect(() => saveDraft(mnda())).not.toThrow();
   });
 
   it("does not throw if clearing fails", () => {

@@ -1,74 +1,116 @@
 "use client";
 
+/**
+ * The workspace: a conversation on the left, the document taking shape on the
+ * right.
+ *
+ * It owns what is being drafted and everything said about it, and hands the
+ * same values to the chat, the form and the preview — so the three cannot
+ * disagree. The Mutual NDA keeps the dedicated form and renderer PL-6 built
+ * around its published cover page; the other ten share a form and a renderer
+ * driven by the catalogue.
+ */
 import { useEffect, useState } from "react";
 import ChatPanel from "@/components/ChatPanel";
 import NdaForm from "@/components/NdaForm";
+import TermsForm from "@/components/TermsForm";
 import DocumentPreview from "@/components/DocumentPreview";
-import { defaultValues, outstandingRequirements, type MndaValues } from "@/lib/fields";
+import TermsPreview from "@/components/TermsPreview";
+import { outstandingRequirements, type MndaValues } from "@/lib/fields";
+import {
+  DOCUMENT_NAMES,
+  GENERATED_DOCUMENTS,
+  findDocument,
+  outstandingTerms,
+  type TermValues,
+} from "@/lib/documents";
 import { clearTranscript } from "@/lib/chat";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
+import {
+  emptyWorkspace,
+  isMutualNda,
+  isRenderable,
+  startDocument,
+  type Workspace,
+} from "@/lib/workspace";
 
 /** Chat fills the document in; the fields are there to correct it directly. */
 type Mode = "chat" | "fields";
 
-/**
- * The Mutual NDA creator, unchanged from PL-6 apart from moving out of
- * `app/page.tsx` so the page can decide whether to show it or the login screen.
- */
-export default function NdaCreator() {
-  const [values, setValues] = useState<MndaValues>(defaultValues);
+export default function DocumentCreator() {
+  const [workspace, setWorkspace] = useState<Workspace>(emptyWorkspace);
   // The saved draft is read after mount so the server and first client render
-  // agree; until then the form shows defaults.
+  // agree; until then the workspace is empty.
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [mode, setMode] = useState<Mode>("chat");
   // Bumped on reset, to remount the chat rather than have it hold a
   // conversation about a document that no longer exists.
   const [conversation, setConversation] = useState(0);
+  // A reply is in flight. Switching to the fields while one is on its way
+  // would let the answer land on top of a value just typed by hand, and the
+  // edit would vanish without a word.
+  const [replying, setReplying] = useState(false);
 
   useEffect(() => {
-    setValues(loadDraft());
+    setWorkspace(loadDraft());
     setDraftLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (draftLoaded) saveDraft(values);
-  }, [values, draftLoaded]);
-
-  const outstanding = outstandingRequirements(values);
-  const isComplete = outstanding.length === 0;
+    if (draftLoaded) saveDraft(workspace);
+  }, [workspace, draftLoaded]);
 
   const handleReset = () => {
-    if (!window.confirm("Clear the form and start a new agreement?")) return;
+    if (!window.confirm("Clear this document and start again?")) return;
     clearDraft();
     clearTranscript();
-    setValues(defaultValues());
+    setWorkspace(emptyWorkspace());
     setConversation((count) => count + 1);
     setMode("chat");
   };
+
+  const document = findDocument(workspace.documentId);
+  const showable = isRenderable(workspace);
+  const outstanding = !showable
+    ? []
+    : isMutualNda(workspace)
+      ? outstandingRequirements(workspace.values as MndaValues)
+      : outstandingTerms(document!, workspace.values as TermValues);
+
+  const title = workspace.documentId
+    ? (DOCUMENT_NAMES[workspace.documentId] ?? "Document")
+    : "Prelegal";
 
   return (
     <div className="layout">
       <header className="masthead">
         <div>
-          <h1>Mutual NDA creator</h1>
+          <h1>{title}</h1>
           <p>
-            Tell the assistant what you need and the agreement builds as you talk.
+            {showable
+              ? "Tell the assistant what you need and the agreement builds as you talk."
+              : "Describe the agreement you need and the assistant will find the right one."}{" "}
             Based on the{" "}
             <a
-              href="https://commonpaper.com/standards/mutual-nda/1.0"
+              href="https://commonpaper.com"
               rel="noreferrer noopener"
               target="_blank"
             >
-              Common Paper Mutual NDA v1.0
-            </a>
-            .
+              Common Paper
+            </a>{" "}
+            standard agreements.
           </p>
         </div>
         <div className="masthead-actions">
           <button type="button" className="button-secondary" onClick={handleReset}>
             Start over
           </button>
-          <button type="button" className="button-primary" onClick={() => window.print()}>
+          <button
+            type="button"
+            className="button-primary"
+            disabled={!showable}
+            onClick={() => window.print()}
+          >
             Download PDF
           </button>
         </div>
@@ -76,62 +118,114 @@ export default function NdaCreator() {
 
       <main className="panes">
         <section className="pane pane-form" aria-label="Agreement details">
-          <div className="mode-switch" role="tablist" aria-label="How to fill in the agreement">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "chat"}
-              className={mode === "chat" ? "mode-tab mode-tab-on" : "mode-tab"}
-              onClick={() => setMode("chat")}
-            >
-              Chat
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === "fields"}
-              className={mode === "fields" ? "mode-tab mode-tab-on" : "mode-tab"}
-              onClick={() => setMode("fields")}
-            >
-              Edit fields
-            </button>
-          </div>
+          {showable && (
+            <div className="mode-switch" role="tablist" aria-label="How to fill in the agreement">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "chat"}
+                className={mode === "chat" ? "mode-tab mode-tab-on" : "mode-tab"}
+                onClick={() => setMode("chat")}
+              >
+                Chat
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "fields"}
+                className={mode === "fields" ? "mode-tab mode-tab-on" : "mode-tab"}
+                disabled={replying}
+                title={replying ? "Waiting for the assistant to reply" : undefined}
+                onClick={() => setMode("fields")}
+              >
+                Edit fields
+              </button>
+            </div>
+          )}
 
-          {mode === "chat" ? (
-            <ChatPanel key={conversation} values={values} onChange={setValues} />
+          {mode === "chat" || !showable ? (
+            <ChatPanel
+              key={conversation}
+              workspace={workspace}
+              onChange={setWorkspace}
+              onBusyChange={setReplying}
+              onDocumentChosen={(documentId) => {
+                setWorkspace(startDocument(documentId));
+                setMode("chat");
+              }}
+            />
+          ) : isMutualNda(workspace) ? (
+            <NdaForm
+              values={workspace.values as MndaValues}
+              onChange={(values) =>
+                setWorkspace((previous) => ({ ...previous, values }))
+              }
+            />
           ) : (
-            <NdaForm values={values} onChange={setValues} />
+            <TermsForm
+              document={document!}
+              values={workspace.values as TermValues}
+              onChange={(values) =>
+                setWorkspace((previous) => ({ ...previous, values }))
+              }
+            />
           )}
         </section>
 
         <section className="pane pane-preview" aria-label="Document preview">
-          <div className="preview-status" role="status">
-            {isComplete ? (
-              <p className="status-complete">
-                <span aria-hidden="true">✓</span> Ready to sign — all details filled in.
+          {!showable ? (
+            <div className="preview-empty">
+              <h2>Nothing to show yet</h2>
+              <p>
+                Once you and the assistant have settled on a document, it appears
+                here and fills in as you talk. These are the ones available:
               </p>
-            ) : (
-              <details>
-                <summary>
-                  {outstanding.length} detail{outstanding.length === 1 ? "" : "s"} still to
-                  fill in
-                </summary>
-                <ul>
-                  {outstanding.map((label) => (
-                    <li key={label}>{label}</li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </div>
+              <ul>
+                <li>Mutual Non-Disclosure Agreement</li>
+                {GENERATED_DOCUMENTS.map((available) => (
+                  <li key={available.id}>{available.name}</li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <>
+              <div className="preview-status" role="status">
+                {outstanding.length === 0 ? (
+                  <p className="status-complete">
+                    <span aria-hidden="true">✓</span> Ready to sign — all details
+                    filled in.
+                  </p>
+                ) : (
+                  <details>
+                    <summary>
+                      {outstanding.length} detail{outstanding.length === 1 ? "" : "s"}{" "}
+                      still to fill in
+                    </summary>
+                    <ul>
+                      {outstanding.map((label) => (
+                        <li key={label}>{label}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
 
-          <DocumentPreview values={values} />
+              {isMutualNda(workspace) ? (
+                <DocumentPreview values={workspace.values as MndaValues} />
+              ) : (
+                <TermsPreview
+                  document={document!}
+                  values={workspace.values as TermValues}
+                />
+              )}
+            </>
+          )}
         </section>
       </main>
 
       <footer className="colophon">
         <p>
-          The Common Paper Mutual NDA is free to use and modify under{" "}
+          The Common Paper agreements are free to use and modify under{" "}
           <a
             href="https://creativecommons.org/licenses/by/4.0/"
             rel="noreferrer noopener"

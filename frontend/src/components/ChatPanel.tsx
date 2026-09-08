@@ -17,14 +17,31 @@ import {
   sendChatMessage,
   type ChatTurn,
 } from "@/lib/chat";
-import type { MndaValues } from "@/lib/fields";
+import type { Workspace } from "@/lib/workspace";
 
 interface Props {
-  values: MndaValues;
-  onChange: (values: MndaValues) => void;
+  workspace: Workspace;
+  /**
+   * Takes an updater rather than a value, so a reply can never write over
+   * state that changed while it was in flight.
+   */
+  onChange: (update: (previous: Workspace) => Workspace) => void;
+  /**
+   * The assistant has settled on a document, or the user has changed to a
+   * different one. The creator starts that document fresh: one agreement's
+   * answers are not another's.
+   */
+  onDocumentChosen: (documentId: string) => void;
+  /** Whether a reply is in flight, so the rest of the UI can hold still. */
+  onBusyChange?: (busy: boolean) => void;
 }
 
-export default function ChatPanel({ values, onChange }: Props) {
+export default function ChatPanel({
+  workspace,
+  onChange,
+  onDocumentChosen,
+  onBusyChange,
+}: Props) {
   const [turns, setTurns] = useState<ChatTurn[]>([GREETING]);
   // Read after mount so the server and first client render agree, exactly as
   // the saved draft is.
@@ -49,15 +66,33 @@ export default function ChatPanel({ values, onChange }: Props) {
     foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [turns, pending]);
 
+  useEffect(() => {
+    onBusyChange?.(pending);
+  }, [pending, onBusyChange]);
+
   const exchange = useCallback(
     async (history: ChatTurn[]) => {
       setPending(true);
       setError(null);
 
       try {
-        const answer = await sendChatMessage(history, values);
+        const answer = await sendChatMessage(history, workspace);
         setTurns([...history, { role: "assistant", content: answer.reply }]);
-        onChange(answer.values);
+
+        if (answer.documentId !== workspace.documentId) {
+          // A document was chosen or changed. The server has already discarded
+          // the previous answers; the creator starts the new one fresh.
+          if (answer.documentId !== null) onDocumentChosen(answer.documentId);
+          return;
+        }
+
+        // Written against the latest state, not the state this request was
+        // sent with, and only if the document has not moved on in between.
+        onChange((previous) =>
+          previous.documentId === answer.documentId
+            ? { ...previous, values: answer.values }
+            : previous,
+        );
       } catch (caught) {
         // Nothing is rolled back: the user's message is already in the
         // transcript, so Try again resends it, and everything extracted so far
@@ -72,7 +107,7 @@ export default function ChatPanel({ values, onChange }: Props) {
         inputRef.current?.focus();
       }
     },
-    [values, onChange],
+    [workspace, onChange, onDocumentChosen],
   );
 
   const send = () => {

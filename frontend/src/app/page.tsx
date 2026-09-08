@@ -11,7 +11,7 @@
  */
 import AppShell from "@/components/AppShell";
 import LoginScreen from "@/components/LoginScreen";
-import NdaCreator from "@/components/NdaCreator";
+import DocumentCreator from "@/components/DocumentCreator";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
@@ -29,7 +29,7 @@ export default function Home() {
 
   return (
     <AppShell>
-      <NdaCreator />
+      <DocumentCreator />
     </AppShell>
   );
 }

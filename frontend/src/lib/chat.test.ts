@@ -30,17 +30,20 @@ describe("sendChatMessage", () => {
     }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await sendChatMessage(
-      [{ role: "user", content: "Delaware law" }],
-      { governingLaw: "" } as never,
-    );
+    await sendChatMessage([{ role: "user", content: "Delaware law" }], {
+      documentId: "mutual-nda",
+      values: { governingLaw: "" },
+    } as never);
 
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("/api/chat/message");
     // The server needs both to answer: the conversation for context, and the
     // current values so it can say what is still missing.
+    // The server needs all three: the conversation for context, the document
+    // being drafted, and the values so it can say what is still missing.
     expect(JSON.parse(init.body as string)).toEqual({
       messages: [{ role: "user", content: "Delaware law" }],
+      documentId: "mutual-nda",
       values: { governingLaw: "" },
     });
   });

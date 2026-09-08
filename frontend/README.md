@@ -1,11 +1,13 @@
 # Prelegal frontend
 
-A Next.js app that builds the Common Paper Mutual NDA out of a conversation:
-describe the agreement, watch it fill in, then print it to PDF.
+A Next.js app that builds a Common Paper agreement out of a conversation:
+describe what you need, watch the document fill in, then print it to PDF.
 
 Implements [PL-6](https://trinitadewanti.atlassian.net/browse/PL-6), behind the
 login added in [PL-7](https://trinitadewanti.atlassian.net/browse/PL-7), driven
-by the chat added in [PL-8](https://trinitadewanti.atlassian.net/browse/PL-8).
+by the chat added in [PL-8](https://trinitadewanti.atlassian.net/browse/PL-8),
+across all eleven documents since
+[PL-9](https://trinitadewanti.atlassian.net/browse/PL-9).
 
 ## Running it
 
@@ -71,10 +73,10 @@ templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
 - **`components/ChatPanel.tsx`** holds the conversation. The server returns the
   reply and the document's new values in one object, so the transcript and the
   preview can never disagree about what was recorded.
-- **`NdaCreator`** owns `values`, and both the chat and the form call
-  `setValues`. One source of truth means there is no syncing to get wrong — and
-  the form is how a value gets *cleared*, which the assistant deliberately
-  cannot do.
+- **`DocumentCreator`** owns the workspace — which document, and everything said
+  about it — and hands the same values to the chat, the form and the preview, so
+  the three cannot disagree. The form is how a value gets *cleared*, which the
+  assistant deliberately cannot do.
 - **`lib/chat.ts`** keeps the transcript in `localStorage` and filters out turns
   it cannot render, so a conversation saved by an older version of the app does
   not put `undefined` on the page.
@@ -95,7 +97,7 @@ templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
 npm test
 ```
 
-104 tests, run with [Vitest](https://vitest.dev), covering the document-generation
+213 tests, run with [Vitest](https://vitest.dev), covering the document-generation
 logic — the part where a defect ends up in a signed agreement — and the code
 that talks to the backend:
 
@@ -126,9 +128,19 @@ that talks to the backend:
   the whole reason the shared file exists. It also holds the two sides to the
   same defaults and the same conditional requirements, since the assistant
   decides what to confirm and what to ask for from that file.
-- **`ChatPanel.test.tsx`** — the only component test, and it exists because the
-  bug it describes actually happened: a failed send dropped the user's message
-  entirely, and *Try again* resent the conversation without it.
+- **`ChatPanel.test.tsx`** — the component tests, which exist because the bugs
+  they describe actually happened: a failed send dropped the user's message
+  entirely and *Try again* resent the conversation without it; and a slow reply
+  could land on a workspace that had changed underneath it. Answers are now
+  written as an update on the latest state, and the *Edit fields* tab is held
+  shut while a reply is on its way.
+- **`render-terms.test.ts`** — the generated key terms page and the standard
+  terms behind it, for every one of the ten: every referenced term is asked
+  about, no value is ever substituted into a clause, and typed markdown, pipes
+  and HTML stay inert.
+- **`documents-drift.test.ts`** — `documents.json` against the templates, in
+  both directions. A clause referring to a term nobody is asked about fails, and
+  so does asking about a term no clause mentions.
 
 Component tests run under jsdom, opted into per file with a
 `// @vitest-environment jsdom` docblock so the rest of the suite stays on the
@@ -148,6 +160,31 @@ template is missing or empty rather than building a document with the wrong
 text.
 
 To change the agreement wording, edit `templates/` — never `src/templates/`.
+
+## Two kinds of document
+
+Common Paper publishes a fill-in **cover page** only for the Mutual NDA. That
+one keeps the hand-built form and renderer of PL-6, because its cover page has
+structure: two parties, paired term choices.
+
+The other ten are **Standard Terms** that reference terms a cover page is
+expected to define. For those the app generates that page — the terms, their
+values, and a signature block — and appends the Standard Terms unchanged. One
+form and one renderer serve all ten, driven by `documents.json`, so adding a
+document needs no new component.
+
+Five different span classes mark those references across the templates
+(`coverpage_link`, `keyterms_link`, `orderform_link`, `sow_link`,
+`businessterms_link`). Handling only the first three left raw template markup in
+two agreements, which is why `documents-drift.test.ts` checks every document
+against its own template rather than trusting the catalogue.
+
+A few fields belong to a document without any clause linking to them: Common
+Paper expects a separate **Order Form** to carry the price and name the product,
+and this app generates one page. Those are marked `"referenced": false`, so the
+drift test knows they are meant to be absent from the template — without them a
+Cloud Service Agreement could be called ready to sign while saying neither what
+was bought nor what it cost.
 
 ## Two kinds of placeholder
 
