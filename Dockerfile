@@ -36,9 +36,14 @@ RUN uv sync --locked --no-dev
 COPY backend/app ./app
 COPY --from=frontend /build/frontend/out ./static
 
+# The shared field schema: the backend reads it to build the assistant's
+# structured-output contract, and the frontend is tested against the same file.
+COPY mnda-fields.json ./mnda-fields.json
+
 ENV PATH="/app/.venv/bin:$PATH" \
     PRELEGAL_STATIC_DIR=/app/static \
-    PRELEGAL_DATABASE_PATH=/app/data/prelegal.db
+    PRELEGAL_DATABASE_PATH=/app/data/prelegal.db \
+    PRELEGAL_FIELDS_PATH=/app/mnda-fields.json
 
 EXPOSE 8000
 

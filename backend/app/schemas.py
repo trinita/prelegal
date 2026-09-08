@@ -1,5 +1,7 @@
 """Request and response bodies."""
 
+from typing import Any, Literal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -25,3 +27,30 @@ class UserResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     database: str
+
+
+class ChatMessage(BaseModel):
+    """One turn of the conversation, as the browser holds it.
+
+    The history lives in the client and is replayed on each request. Nothing is
+    stored: the database is rebuilt on every start, so keeping conversations in
+    it would promise a durability that does not exist.
+    """
+
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+    #: The document as the browser currently has it, so the assistant can be
+    #: told what is already recorded rather than inferring it from the history.
+    values: dict[str, Any]
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    #: The complete document values, merged on the server. Returning the whole
+    #: thing rather than a patch keeps the merge in one place.
+    values: dict[str, Any]
+    outstanding: list[str]

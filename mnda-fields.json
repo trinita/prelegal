@@ -1,0 +1,207 @@
+{
+  "$comment": "The Mutual NDA cover page's fields, shared by the frontend form and the backend's AI extraction. Both sides are tested against this file, so a field added here and missed on one side fails the suite rather than leaving a gap in a signed agreement. Dotted names address nested values: 'partyOne.company' is values.partyOne.company. 'label' is how a field is named to the assistant, which is told to speak plainly - the machine-facing 'name' is never meant to reach a user. 'default' is what the template prints before anyone says anything, and is treated as unconfirmed until the user speaks to it.",
+  "document": "Mutual Non-Disclosure Agreement (Cover Page)",
+  "fields": [
+    {
+      "name": "purpose",
+      "type": "string",
+      "label": "what the confidential information may be used for",
+      "required": true,
+      "description": "Why the parties are sharing confidential information - the business reason it may be used for. A phrase, not a sentence about the NDA itself.",
+      "default": "Evaluating whether to enter into a business relationship with the other party."
+    },
+    {
+      "name": "effectiveDate",
+      "type": "date",
+      "label": "the date the agreement starts",
+      "required": true,
+      "description": "The date the agreement takes effect, written as ISO 8601 yyyy-mm-dd. Convert whatever the user says into that form."
+    },
+    {
+      "name": "mndaTermType",
+      "type": "enum",
+      "label": "how the agreement ends",
+      "required": true,
+      "description": "Whether the agreement runs for a set number of years, or carries on until one side ends it.",
+      "default": "expires",
+      "enum": [
+        "expires",
+        "untilTerminated"
+      ],
+      "valueLabels": {
+        "expires": "runs for a set number of years",
+        "untilTerminated": "carries on until one side ends it"
+      }
+    },
+    {
+      "name": "mndaTermYears",
+      "type": "integer-string",
+      "label": "how many years the agreement runs",
+      "required": true,
+      "description": "How many years the agreement runs before it expires. Needed only when the agreement runs for a set number of years rather than carrying on until someone ends it.",
+      "default": "1",
+      "requiredWhen": {
+        "field": "mndaTermType",
+        "equals": "expires"
+      }
+    },
+    {
+      "name": "confidentialityTermType",
+      "type": "enum",
+      "label": "how long confidentiality lasts",
+      "required": true,
+      "description": "Whether confidentiality lasts a set number of years, or forever.",
+      "default": "years",
+      "enum": [
+        "years",
+        "perpetual"
+      ],
+      "valueLabels": {
+        "years": "lasts a set number of years",
+        "perpetual": "lasts forever"
+      }
+    },
+    {
+      "name": "confidentialityYears",
+      "type": "integer-string",
+      "label": "how many years confidentiality lasts",
+      "required": true,
+      "description": "How many years confidential information stays protected. Needed only when confidentiality lasts a set number of years rather than forever.",
+      "default": "1",
+      "requiredWhen": {
+        "field": "confidentialityTermType",
+        "equals": "years"
+      }
+    },
+    {
+      "name": "governingLaw",
+      "type": "enum",
+      "label": "which state's law governs the agreement",
+      "required": true,
+      "description": "The US state whose law governs the agreement.",
+      "enum": [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "Delaware",
+        "District of Columbia",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming"
+      ]
+    },
+    {
+      "name": "jurisdiction",
+      "type": "string",
+      "label": "where any dispute would be heard",
+      "required": true,
+      "description": "Where legal proceedings must be brought: a city or county and state, such as 'New Castle, DE'."
+    },
+    {
+      "name": "partyOne.company",
+      "type": "string",
+      "label": "the first party's company name",
+      "required": true,
+      "description": "Legal company name of the first party."
+    },
+    {
+      "name": "partyOne.printName",
+      "type": "string",
+      "label": "who signs for the first party",
+      "required": true,
+      "description": "Full name of the person signing for the first party."
+    },
+    {
+      "name": "partyOne.title",
+      "type": "string",
+      "label": "the first party signatory's job title",
+      "required": false,
+      "description": "Job title of the first party's signatory."
+    },
+    {
+      "name": "partyOne.noticeAddress",
+      "type": "string",
+      "label": "where the first party receives notices",
+      "required": true,
+      "description": "Where the first party receives formal notices: an email or a postal address."
+    },
+    {
+      "name": "partyTwo.company",
+      "type": "string",
+      "label": "the second party's company name",
+      "required": true,
+      "description": "Legal company name of the second party."
+    },
+    {
+      "name": "partyTwo.printName",
+      "type": "string",
+      "label": "who signs for the second party",
+      "required": true,
+      "description": "Full name of the person signing for the second party."
+    },
+    {
+      "name": "partyTwo.title",
+      "type": "string",
+      "label": "the second party signatory's job title",
+      "required": false,
+      "description": "Job title of the second party's signatory."
+    },
+    {
+      "name": "partyTwo.noticeAddress",
+      "type": "string",
+      "label": "where the second party receives notices",
+      "required": true,
+      "description": "Where the second party receives formal notices: an email or a postal address."
+    },
+    {
+      "name": "modifications",
+      "type": "string",
+      "label": "any changes to the standard terms",
+      "required": false,
+      "description": "Any agreed changes to the standard terms. Left empty, the document records 'None.'"
+    }
+  ]
+}

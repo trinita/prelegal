@@ -40,7 +40,8 @@ pages on :3000 and calls across to :8000.
 | `app/schemas.py` | Request and response bodies |
 | `app/session.py` | The fake session (read the docstring) |
 | `app/users.py` | Finding a user by name, and creating one on first sight |
-| `app/routers/` | `auth.py` and `health.py` |
+| `app/ai/` | The assistant: field schema, prompts, the model call, and merging its answer |
+| `app/routers/` | `auth.py`, `chat.py` and `health.py` |
 
 The engine is built inside `create_app` rather than at import time, and both the
 engine and the settings are published on `app.state`, so everything a request
@@ -67,6 +68,51 @@ This is deliberate: PL-7 asks for a fake login, and a fake session carrying a
 real-looking signature would invite the next reader to trust it. PL-10 replaces
 `app/session.py` wholesale with password checking and signed tokens.
 
+## The assistant
+
+`POST /api/chat/message` takes the conversation and the document's current
+values, and returns a reply together with the merged values. The call is
+LiteLLM → OpenRouter → `openai/gpt-oss-120b`, with the provider pinned to
+Cerebras and Structured Outputs so the answer is read as data rather than
+parsed out of prose.
+
+Three decisions are worth knowing before changing `app/ai/`:
+
+- **Every field in the response schema is nullable, and all of them are
+  required.** Strict mode insists each property be present, so `null` is how the
+  model says "the user did not tell me" instead of being pushed into inventing a
+  value on every turn.
+- **`null` and an empty string both mean "no change".** A model reporting
+  nothing must never be able to erase what someone already gave. Clearing a
+  value deliberately is what the *Edit fields* form is for.
+- **The state of the document is re-sent every turn** rather than left to the
+  model's memory of the conversation, so a long chat cannot drift out of step
+  with the document on screen.
+- **A value still equal to the template's default is treated as unconfirmed.**
+  The browser sends the template's starting values on the first turn, so without
+  this the assistant reads them as answers and never raises them — and someone
+  signs a one-year term they were never asked about. They are listed separately
+  and must be put to the user before the document can be called ready.
+- **Fields are named to the model by a plain-language label**, never by
+  `partyOne.printName` or `untilTerminated`. The state block is the one place
+  jargon would otherwise reach a model told to speak plainly.
+
+Values are re-validated on arrival. An enum outside its list, a year count that
+is not a positive whole number, a date that is not ISO `yyyy-mm-dd`, or a value
+past the length limit is discarded rather than written into an agreement. The
+schema should make most of these impossible; they are checked because the cost
+of being wrong is a defective legal document. The date check matters most: the
+renderer prints anything it cannot parse verbatim *and marks it as a filled
+value*, so "next month" would look like a date somebody had confirmed.
+
+Whether a field is required can depend on another — a term length is only needed
+when the term is the kind that expires. `Field.is_required` mirrors the form's
+own rules, so the assistant cannot call a document ready that the preview beside
+it still shows as incomplete.
+
+The endpoint requires a session. Each message costs money, so it is not left
+open to anyone who can reach the port.
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -75,6 +121,12 @@ real-looking signature would invite the next reader to trust it. PL-10 replaces
 | `PRELEGAL_STATIC_DIR` | `backend/static` | The built frontend; skipped if absent |
 | `PRELEGAL_DEV_ORIGINS` | `["http://localhost:3000", "http://127.0.0.1:3000"]` | Origins allowed to call the API with credentials |
 | `PRELEGAL_SESSION_COOKIE_NAME` | `prelegal_session` | Session cookie name |
+| `OPENROUTER_API_KEY` | none | The assistant's key. Without it, chat returns 503 and the rest of the app is unaffected. |
+| `PRELEGAL_FIELDS_PATH` | `mnda-fields.json` at the repo root | The shared field schema |
+| `PRELEGAL_AI_MODEL` | `openrouter/openai/gpt-oss-120b` | Model, as LiteLLM names it |
+| `PRELEGAL_AI_PROVIDER` | `cerebras` | Pinned inference provider |
+| `PRELEGAL_MAX_HISTORY_MESSAGES` | `40` | Turns forwarded per request |
+| `PRELEGAL_MAX_MESSAGE_CHARACTERS` | `4000` | Per-message cap |
 
 ## Tests
 
@@ -82,8 +134,21 @@ real-looking signature would invite the next reader to trust it. PL-10 replaces
 uv run pytest
 ```
 
-16 tests covering the fake login, the session cookie's edge cases — a cookie
-naming a user who no longer exists, a malformed one — the two properties the
-database is supposed to have (the schema exists after start-up, and a restart
-discards what came before), and the race two simultaneous first-time logins
-under the same name would otherwise lose.
+55 tests. No test makes a network call: the model is stubbed.
+
+- The fake login, and the session cookie's edge cases — a cookie naming a user
+  who no longer exists, a malformed one.
+- The two properties the database is supposed to have: the schema exists after
+  start-up, and a restart discards what came before.
+- The race two simultaneous first-time logins under the same name would
+  otherwise lose.
+- What the assistant is allowed to write into the document: nulls and blanks
+  leave values alone, a state outside the list is dropped, a year count that is
+  not a positive whole number is dropped, and an invented field name is ignored.
+- The response schema's strictness, which the provider would otherwise reject at
+  request time.
+- The endpoint: a missing key is a 503 rather than a 500, history and message
+  length are capped, and signing in is required.
+- What the assistant is shown: template defaults appear as needing confirmation
+  rather than as answers, a value the user chose is settled even when it happens
+  to equal the default, and no field name or code word reaches the model.
