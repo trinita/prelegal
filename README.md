@@ -12,27 +12,66 @@ user produce a finished, signable document by filling in a short form.
 | --- | --- |
 | `templates/` | The agreement templates, copied verbatim from Common Paper |
 | `catalog.json` | Name, description, filename and source repo for each template |
-| `frontend/` | Next.js app — currently the Mutual NDA creator |
+| `frontend/` | Next.js app — the login screen and the Mutual NDA creator |
+| `backend/` | FastAPI + SQLite, which also serves the built frontend |
+| `scripts/` | Start and stop, per platform |
+| `Dockerfile` | Multi-stage build: Node compiles the frontend, Python serves it |
 
 ## Getting started
 
+Everything runs in one container, on one port:
+
 ```bash
-cd frontend
-npm install
-npm run dev          # http://localhost:3000
-npm test             # run the test suite
+scripts/start-mac.sh        # or start-linux.sh, or start-windows.ps1
 ```
 
-See [`frontend/README.md`](frontend/README.md) for the app's architecture,
-scripts, and what the tests cover.
+Then open http://localhost:8000 and sign in with any name — there are no
+passwords yet (see *Signing in*, below). To stop:
+
+```bash
+scripts/stop-mac.sh         # or stop-linux.sh, or stop-windows.ps1
+```
+
+### Working on it
+
+The container rebuilds the frontend on every start, which is slow for a change
+you want to see immediately. For that, run the two halves separately:
+
+```bash
+cd backend && uv run uvicorn app.main:app --reload      # API on :8000
+cd frontend && npm run dev                              # pages on :3000
+```
+
+The dev server points at the API on :8000 by default, so there is nothing to
+configure.
+
+See [`frontend/README.md`](frontend/README.md) and
+[`backend/README.md`](backend/README.md) for each half's architecture, scripts
+and tests.
+
+## Signing in
+
+There is no authentication yet. The login screen takes a name, and the backend
+turns it into a user and a session cookie without checking anything — the cookie
+is unsigned and trivially forgeable. It exists so the shape of the product is
+right, and so the database is exercised end to end; real credentials arrive with
+PL-10. The database is also rebuilt from scratch every time the container
+starts, so no account and nothing saved outlives a restart.
 
 ## Testing
 
-The document-generation logic is covered by a Vitest suite in
-`frontend/src/lib/*.test.ts` — run it with `npm test` from `frontend/`. That is
-the code that decides what a signed agreement says, so it is where a defect
-matters most; several tests exist because the bug they describe actually
-occurred and reached review.
+```bash
+cd frontend && npm test          # 85 Vitest tests
+cd backend && uv run pytest      # 16 pytest tests
+```
+
+The frontend suite covers the document-generation logic in
+`frontend/src/lib/*.test.ts` — the code that decides what a signed agreement
+says, so it is where a defect matters most; several tests exist because the bug
+they describe actually occurred and reached review — plus the API client. The
+backend suite covers the fake login, the session cookie's edge cases, the
+promise that a restart leaves an empty database, and the race between two
+simultaneous first-time logins under the same name.
 
 New tests are expected to be shown failing before the fix that makes them pass.
 A test that has never failed for the right reason has not been demonstrated to
@@ -44,10 +83,20 @@ and still need a browser-based runner.
 
 ## Status
 
-Early prototype. The Mutual NDA creator ([PL-6](https://trinitadewanti.atlassian.net/browse/PL-6))
-is the first end-to-end slice: form → live document → print to PDF, entirely in
-the browser. The remaining eleven templates in `catalog.json` are curated but not
-yet wired up, and there is no backend yet.
+Early. Two slices exist so far.
+
+The Mutual NDA creator ([PL-6](https://trinitadewanti.atlassian.net/browse/PL-6))
+turns a form into a signable document: live preview, print to PDF, entirely in
+the browser.
+
+The V1 foundation ([PL-7](https://trinitadewanti.atlassian.net/browse/PL-7))
+puts that behind a backend, a database and a container, with a placeholder login
+in front of it. No product behaviour changed — the NDA creator is the same code,
+now reachable after signing in.
+
+Still to come: the remaining eleven templates in `catalog.json` are curated but
+not yet wired up, the AI chat that is meant to replace the form, and real
+authentication.
 
 ## Licence
 

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mutual NDA creator | Prelegal",
+  title: "Prelegal",
   description:
-    "Create a Common Paper Mutual Non-Disclosure Agreement by filling in a short form, then download it as a PDF.",
+    "Draft legal agreements from lawyer-drafted Common Paper templates, then download them as a PDF.",
 };
 
 export default function RootLayout({
@@ -12,7 +13,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

@@ -17,6 +17,15 @@
   --focus: #1f4b8f;
   --ok: #1f6b3f;
 
+  /* Prelegal brand, used by the login screen and the app bar. These are fixed
+     values rather than scheme-aware ones: a brand mark that shifts with the
+     viewer's colour scheme stops being a brand mark. */
+  --brand-blue: #209dd7;
+  --brand-purple: #753991;
+  --brand-navy: #032147;
+  --brand-yellow: #ecad0a;
+  --brand-gray: #888888;
+
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
     "Times New Roman", serif;
@@ -457,6 +466,155 @@ input:disabled {
   max-width: 70ch;
 }
 
+/* --- app bar ------------------------------------------------------------- */
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem clamp(1rem, 3vw, 2rem);
+  background: var(--brand-navy);
+  color: #ffffff;
+}
+
+.app-bar-wordmark {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* The one flash of yellow, so the mark is recognisable at a glance. */
+.app-bar-wordmark::after {
+  content: ".";
+  color: var(--brand-yellow);
+}
+
+.app-bar-account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.app-bar-user {
+  color: #d7e3ef;
+}
+
+.button-quiet {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.button-quiet:hover {
+  border-color: var(--brand-yellow);
+  color: var(--brand-yellow);
+}
+
+/* --- login --------------------------------------------------------------- */
+
+.splash,
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  color: var(--ink-muted);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 26rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--brand-blue);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.login-wordmark {
+  margin: 0;
+  color: var(--brand-blue);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.login-card h1 {
+  margin: 0.5rem 0 0.25rem;
+  color: var(--brand-navy);
+  font-size: 1.5rem;
+}
+
+.login-blurb {
+  margin: 0 0 1.5rem;
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+}
+
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.login-card input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--page);
+  color: var(--ink);
+  font: inherit;
+}
+
+.login-card input:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 1px;
+}
+
+.button-submit {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--brand-purple);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button-submit:hover:not(:disabled) {
+  background: #612f78;
+}
+
+.button-submit:disabled {
+  background: var(--brand-gray);
+  cursor: not-allowed;
+}
+
+.login-error {
+  margin: 0.25rem 0 0;
+  color: #b3261e;
+  font-size: 0.875rem;
+}
+
+.login-notice {
+  margin: 1.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--brand-gray);
+  font-size: 0.8125rem;
+}
+
 /* --- print --------------------------------------------------------------- */
 
 @page {
@@ -472,6 +630,7 @@ input:disabled {
   }
 
   /* Only the document prints. */
+  .app-bar,
   .masthead,
   .pane-form,
   .preview-status,
