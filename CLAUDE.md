@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-The current implementation supports all 11 document types via AI chat with full user authentication and document persistence.
+Only the Mutual NDA is wired up so far, and it is filled in with a form rather than by chat. The AI chat, the remaining document types, and real authentication are still to build — see Implementation Status at the end of this file for what is actually in the repository.
 
 ## Development process
 
@@ -22,7 +22,7 @@ When instructed to build a feature:
 
 When writing code to make calls to LLMs, use your Cerebras skill to use LiteLLM via OpenRouter to the `openrouter/openai/gpt-oss-120b` model with Cerebras as the inference provider. You should use Structured Outputs so that you can interpret the results and populate fields in the legal document.
 
-There is an OPEN_API_KEY in the .env file in the project root.
+The key is `OPENROUTER_API_KEY`, in the `.env` file in the project root. `.env` is git-ignored and is not copied into the Docker image, so the container will need it passed in as an environment variable once there is code that reads it. Nothing calls an LLM yet; PL-8 is the first ticket that will.
 
 ## Technical design
 
@@ -30,7 +30,7 @@ The entire project should be packaged into a Docker container.
 The backend should be in backend/ and be a uv project, using FastAPI.  
 The frontend should be in frontend/  
 The database should use SQLLite and be created from scratch each time the Docker container is brought up, allowing for a users table with sign up and sign in.  
-Consider statically building the frontend and serving it via FastAPI, if that will work.  
+The frontend is statically exported and served by FastAPI — this was tried in PL-7 and works, because every page renders in the browser.  
 There should be scripts in scripts/ for:  
 ```bash
 # Mac
@@ -91,3 +91,46 @@ here has not been built yet.
   the right one
 - **PL-10** — real authentication (email, password hashing, tokens) and document
   persistence per user
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `templates/` | Agreement templates, verbatim from Common Paper. Never edit generated copies instead. |
+| `catalog.json` | Name, description, filename and source repo for each template |
+| `backend/` | uv project: FastAPI, SQLAlchemy over SQLite, serves the API and the built frontend |
+| `frontend/` | Next.js app, statically exported to `out/` at build time |
+| `scripts/` | Start and stop, per platform; the four shell scripts share `scripts/_compose.sh` |
+| `Dockerfile` | Multi-stage: Node compiles the frontend, Python serves it |
+
+Each half has its own README covering architecture and tests.
+
+## Running and testing
+
+```bash
+scripts/start-mac.sh              # whole product on http://localhost:8000
+scripts/stop-mac.sh
+
+cd backend  && uv run pytest      # 16 tests
+cd frontend && npm test           # 85 tests
+```
+
+For frontend work, `npm run dev` serves pages on :3000 and calls the API on
+:8000 by default, so run `uv run uvicorn app.main:app --reload` alongside it.
+There is nothing to configure.
+
+## Constraints worth knowing before changing things
+
+- **The login is not authentication.** A name is exchanged for an unsigned,
+  forgeable cookie. This is deliberate and documented in
+  `backend/app/session.py`; PL-10 replaces that module. Do not build anything
+  that treats the session as a security boundary.
+- **The database does not survive a restart.** Every start drops the schema and
+  recreates it, and no volume is mounted. Whichever ticket introduces data worth
+  keeping should add Alembic and a volume at the same time.
+- **The legal text is the product.** `templates/` is the single source of truth;
+  `frontend/src/templates/sources.ts` is generated at build time and git-ignored.
+  Change wording in `templates/` only.
+- **New tests must be shown failing first.** Two tests written for this project
+  passed against broken code until they were checked that way. Mutate the code,
+  confirm the test fails for the right reason, then restore.
