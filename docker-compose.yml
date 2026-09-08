@@ -1,0 +1,20 @@
+# No volume is mounted on purpose: the SQLite file lives inside the container's
+# writable layer, so every `up` starts from an empty database. That is what
+# PL-7 asks for while the schema is still moving.
+services:
+  prelegal:
+    build: .
+    image: prelegal:latest
+    container_name: prelegal
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s

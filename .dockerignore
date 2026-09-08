@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+**/out
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/data
+**/*.db
+frontend/src/templates/sources.ts
+frontend/tsconfig.tsbuildinfo
+.git
+.github
+.claude
+.env
+scripts
