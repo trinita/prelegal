@@ -1,0 +1,36 @@
+LICENSE NOTICE FOR THE templates/ DIRECTORY
+===========================================
+
+Every legal agreement template in this directory is a copy of a Common Paper
+standard agreement, licensed under the Creative Commons Attribution 4.0
+International License (CC BY 4.0).
+
+    Full licence text: https://creativecommons.org/licenses/by/4.0/legalcode
+    Summary:           https://creativecommons.org/licenses/by/4.0/
+
+Source
+------
+Common Paper — https://commonpaper.com
+GitHub organisation — https://github.com/CommonPaper
+
+The individual repository each file came from is recorded in `catalog.json`
+in the project root. Files were retrieved on 2026-09-08.
+
+What CC BY 4.0 allows
+---------------------
+You are free to share and adapt these templates for any purpose, including
+commercially, provided you give appropriate credit to Common Paper, link to
+the licence, and indicate whether changes were made. Attribution must not
+suggest that Common Paper endorses you or your use.
+
+Note on modified documents
+--------------------------
+When this project generates a document derived from one of these templates,
+the output must retain attribution to Common Paper and indicate that the
+template was modified, in line with the attribution requirement above.
+
+Not legal advice
+----------------
+These templates are provided for use as starting points. They are not legal
+advice, and neither Common Paper nor this project warrants their suitability
+for any particular situation.
