@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from app.ai.catalogue import Document
 from app.ai.fields import Field, read
 
 SYSTEM_PROMPT = """\
@@ -27,10 +28,41 @@ correct, and do not re-ask for something they have already answered.
 - Only say the document is ready when nothing is outstanding and nothing is \
 still awaiting confirmation. Then say so plainly and tell them they can \
 download it.
+- Several of these documents attach to a main agreement rather than standing \
+alone. If they are drafting one of those, say so once, plainly.
 
-You are drafting only a Mutual NDA. If asked for a different kind of agreement, \
-say that this is the only document available so far.\
+Choosing the document:
+- Work out which of the documents listed below the person needs, and say which \
+one you are drafting so they can correct you.
+- If what they describe is not in the list, say plainly that you cannot produce \
+it, name the closest one you can produce and what it covers, and let them decide. \
+Do not start collecting details for a document they have not agreed to.
+- Do not stretch a document to cover something it is not for. An employment \
+contract is not an NDA with extra clauses.
+- If they change their mind about which document they want, start that one \
+afresh: details from the old one do not carry over.\
 """
+
+
+def catalogue_prompt(catalogue: tuple[Document, ...]) -> str:
+    """The documents that can be produced, and nothing else.
+
+    Sent every turn. The model has no other way to know what the templates
+    cover, and a confident offer to draft something that does not exist is the
+    worst failure this conversation has.
+    """
+    return "\n".join(
+        ["Documents you can produce - these and no others:", *(d.describe() for d in catalogue)]
+    )
+
+
+def describe_choice(document: Document | None) -> str:
+    if document is None:
+        return (
+            "No document chosen yet. Find out what they need before collecting "
+            "any details."
+        )
+    return f"You are drafting: {document.name} ({document.id})."
 
 
 def describe_state(fields: tuple[Field, ...], values: dict[str, Any]) -> str:

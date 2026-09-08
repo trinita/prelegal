@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-Only the Mutual NDA is wired up so far, filled in by chatting with an assistant. The remaining document types and real authentication are still to build — see Implementation Status at the end of this file for what is actually in the repository.
+All eleven document types are supported, filled in by chatting with an assistant. Real authentication is still to build — see Implementation Status at the end of this file for what is actually in the repository.
 
 ## Development process
 
@@ -99,9 +99,20 @@ here has not been built yet.
   assumed: the template's defaults would otherwise be read as answers
 - 55 backend tests and 104 frontend tests
 
+### Completed (PL-9) — every document type
+- All eleven templates from `catalog.json` can be drafted
+- The assistant works out which document is needed from a plain description, and
+  says plainly when it cannot produce one, offering the nearest it can
+- Only the Mutual NDA has a published cover page; for the other ten the app
+  generates the key terms page their clauses reference and appends the standard
+  terms verbatim
+- `documents.json` defines those ten and is checked against the templates in
+  both directions, so the catalogue cannot drift from the legal text
+- Choosing or changing a document starts it empty: one agreement's answers are
+  not another's
+- 77 backend tests and 213 frontend tests
+
 ### Planned
-- **PL-9** — all 11 document types from `catalog.json`, with the AI routing to
-  the right one
 - **PL-10** — real authentication (email, password hashing, tokens) and document
   persistence per user
 
@@ -114,7 +125,8 @@ here has not been built yet.
 | `backend/` | uv project: FastAPI, SQLAlchemy over SQLite, serves the API and the built frontend |
 | `frontend/` | Next.js app, statically exported to `out/` at build time |
 | `scripts/` | Start and stop, per platform; the four shell scripts share `scripts/_compose.sh` |
-| `mnda-fields.json` | The document's fields, shared by the form and the AI |
+| `mnda-fields.json` | The Mutual NDA's cover page fields, shared by the form and the AI |
+| `documents.json` | The other ten documents, and the terms their clauses reference |
 | `Dockerfile` | Multi-stage: Node compiles the frontend, Python serves it |
 
 Each half has its own README covering architecture and tests.
@@ -125,8 +137,8 @@ Each half has its own README covering architecture and tests.
 scripts/start-mac.sh              # whole product on http://localhost:8000
 scripts/stop-mac.sh
 
-cd backend  && uv run pytest      # 55 tests
-cd frontend && npm test           # 104 tests
+cd backend  && uv run pytest      # 77 tests
+cd frontend && npm test           # 213 tests
 ```
 
 For frontend work, `npm run dev` serves pages on :3000 and calls the API on
@@ -145,6 +157,10 @@ There is nothing to configure.
 - **The legal text is the product.** `templates/` is the single source of truth;
   `frontend/src/templates/sources.ts` is generated at build time and git-ignored.
   Change wording in `templates/` only.
+- **Never substitute a value into Standard Terms.** Those clauses are written to
+  read with the defined term — "during the Pilot Period" — so putting the value
+  there breaks sentences and alters the legal wording. Values belong on the
+  cover page or the generated key terms page.
 - **New tests must be shown failing first.** Two tests written for this project
   passed against broken code until they were checked that way. Mutate the code,
   confirm the test fails for the right reason, then restore.

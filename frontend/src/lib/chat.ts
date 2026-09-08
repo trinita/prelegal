@@ -8,7 +8,7 @@
  */
 import { apiFetch } from "@/lib/api";
 import { readJson, remove, writeJson } from "@/lib/storage";
-import type { MndaValues } from "@/lib/fields";
+import type { Workspace } from "@/lib/workspace";
 
 const STORAGE_KEY = "prelegal.mnda.transcript.v1";
 
@@ -17,9 +17,17 @@ export interface ChatTurn {
   content: string;
 }
 
-interface ChatReply {
+export interface ChatReply {
   reply: string;
-  values: MndaValues;
+  /**
+   * The document after this turn. It differs from the one sent when the user
+   * has just settled on something, or changed their mind — and stays null
+   * while they are still deciding, or have asked for something this product
+   * cannot produce.
+   */
+  documentId: string | null;
+  /** The whole document, merged on the server, in the shape that document uses. */
+  values: Workspace["values"];
   /** Field names still outstanding, as the server sees them. */
   outstanding: string[];
 }
@@ -27,15 +35,19 @@ interface ChatReply {
 export const GREETING: ChatTurn = {
   role: "assistant",
   content:
-    "Hello — I can put together a mutual NDA with you. Tell me what you need it " +
-    "for, or just start with who the two sides are, and I'll ask about the rest " +
-    "as we go.",
+    "Hello — I can draft an agreement with you. Tell me what you need: an NDA, " +
+    "a SaaS subscription, a pilot, a consulting arrangement, and a few others. " +
+    "Describe it in your own words and I'll work out which one fits.",
 };
 
-export function sendChatMessage(messages: ChatTurn[], values: MndaValues) {
+export function sendChatMessage(messages: ChatTurn[], workspace: Workspace) {
   return apiFetch<ChatReply>("/api/chat/message", {
     method: "POST",
-    body: JSON.stringify({ messages, values }),
+    body: JSON.stringify({
+      messages,
+      documentId: workspace.documentId,
+      values: workspace.values,
+    }),
   });
 }
 

@@ -7,14 +7,19 @@ discovered in a conversation.
 
 import pytest
 
+from app.ai.catalogue import load_catalogue
 from app.ai.fields import Field, load_fields
 from app.ai.schema import build_response_schema
 from app.config import Settings
 
+DOCUMENT_IDS = tuple(
+    d.id for d in load_catalogue(Settings().documents_path, Settings().fields_path)
+)
+
 
 @pytest.fixture
 def schema() -> dict:
-    return build_response_schema(load_fields(Settings().fields_path))
+    return build_response_schema(load_fields(Settings().fields_path), DOCUMENT_IDS)
 
 
 @pytest.fixture
@@ -65,3 +70,34 @@ def test_every_field_carries_a_description(fields: tuple[Field, ...]) -> None:
     """The descriptions are the model's only guidance on what a field means."""
     for field in fields:
         assert field.description.strip(), f"{field.name} has no description"
+
+
+def test_the_document_is_a_closed_list_that_allows_null(schema: dict) -> None:
+    """The assistant can only name a document the templates actually support."""
+    document = schema["schema"]["properties"]["document"]
+
+    assert "mutual-nda" in document["enum"]
+    assert None in document["enum"]
+    assert "employment-contract" not in document["enum"]
+
+
+def test_there_is_nothing_to_extract_into_before_a_document_is_chosen() -> None:
+    """Asking for values first would invite filling in a form it has not seen."""
+    schema = build_response_schema((), DOCUMENT_IDS)
+
+    assert "updates" not in schema["schema"]["properties"]
+    assert set(schema["schema"]["required"]) == {"reply", "document"}
+
+
+def test_every_document_in_the_catalogue_builds_a_strict_schema() -> None:
+    """Each of the eleven has to survive the provider's strict-mode rules."""
+    settings = Settings()
+
+    for document in load_catalogue(settings.documents_path, settings.fields_path):
+        built = build_response_schema(document.fields, DOCUMENT_IDS)
+        updates = built["schema"]["properties"]["updates"]
+
+        assert built["strict"] is True, document.id
+        assert set(updates["required"]) == {f.name for f in document.fields}, document.id
+        for name, spec in updates["properties"].items():
+            assert "null" in spec["type"], f"{document.id}.{name}"

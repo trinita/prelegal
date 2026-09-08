@@ -14,6 +14,7 @@ RUN npm ci
 # sync-templates reads ../templates, so the dataset has to sit beside the app
 # exactly as it does in the repository.
 COPY templates /build/templates
+COPY documents.json /build/documents.json
 COPY frontend ./
 
 RUN npm run build
@@ -36,14 +37,16 @@ RUN uv sync --locked --no-dev
 COPY backend/app ./app
 COPY --from=frontend /build/frontend/out ./static
 
-# The shared field schema: the backend reads it to build the assistant's
-# structured-output contract, and the frontend is tested against the same file.
-COPY mnda-fields.json ./mnda-fields.json
+# The shared schemas: the backend reads them to build the assistant's
+# structured-output contract and to know what it can draft, and the frontend is
+# tested against the same files.
+COPY mnda-fields.json documents.json ./
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PRELEGAL_STATIC_DIR=/app/static \
     PRELEGAL_DATABASE_PATH=/app/data/prelegal.db \
-    PRELEGAL_FIELDS_PATH=/app/mnda-fields.json
+    PRELEGAL_FIELDS_PATH=/app/mnda-fields.json \
+    PRELEGAL_DOCUMENTS_PATH=/app/documents.json
 
 EXPOSE 8000
 

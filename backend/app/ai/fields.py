@@ -68,28 +68,29 @@ def read(values: dict[str, Any], path: tuple[str, ...]) -> str:
     return str(current).strip() if isinstance(current, (str, int, float)) else ""
 
 
+def field_from(entry: dict[str, Any]) -> Field:
+    """One field, however it was declared. Both schema files use this shape."""
+    return Field(
+        name=entry["name"],
+        type=entry["type"],
+        label=entry["label"],
+        description=entry["description"],
+        required=entry["required"],
+        enum=tuple(entry["enum"]) if "enum" in entry else None,
+        value_labels=entry.get("valueLabels", {}),
+        default=entry.get("default"),
+        required_when=(
+            (entry["requiredWhen"]["field"], entry["requiredWhen"]["equals"])
+            if "requiredWhen" in entry
+            else None
+        ),
+    )
+
+
 @lru_cache
 def load_fields(path: Path) -> tuple[Field, ...]:
     raw: dict[str, Any] = json.loads(path.read_text())
-
-    fields = tuple(
-        Field(
-            name=entry["name"],
-            type=entry["type"],
-            label=entry["label"],
-            description=entry["description"],
-            required=entry["required"],
-            enum=tuple(entry["enum"]) if "enum" in entry else None,
-            value_labels=entry.get("valueLabels", {}),
-            default=entry.get("default"),
-            required_when=(
-                (entry["requiredWhen"]["field"], entry["requiredWhen"]["equals"])
-                if "requiredWhen" in entry
-                else None
-            ),
-        )
-        for entry in raw["fields"]
-    )
+    fields = tuple(field_from(entry) for entry in raw["fields"])
 
     if not fields:
         raise ValueError(f"No fields defined in {path}")

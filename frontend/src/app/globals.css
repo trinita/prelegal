@@ -120,6 +120,12 @@ button {
   border: 1px solid transparent;
 }
 
+.button-primary:disabled,
+.button-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button-primary {
   background: var(--accent);
   color: var(--accent-ink);
@@ -407,6 +413,30 @@ input:disabled {
 .chat-composer .button-submit {
   margin-top: 0;
   padding: 0.55rem 1.1rem;
+}
+
+/* --- nothing chosen yet --------------------------------------------------- */
+
+.preview-empty {
+  max-width: 34rem;
+  margin: 2rem auto;
+  color: var(--ink-muted);
+}
+
+.preview-empty h2 {
+  margin: 0 0 0.5rem;
+  color: var(--brand-navy);
+  font-size: 1.125rem;
+}
+
+.preview-empty p {
+  margin: 0 0 1rem;
+}
+
+.preview-empty ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.7;
 }
 
 /* --- preview status ------------------------------------------------------ */
