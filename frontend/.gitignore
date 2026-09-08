@@ -1,0 +1,5 @@
+# Generated from ../templates by scripts/sync-templates.mjs
+/src/templates/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
