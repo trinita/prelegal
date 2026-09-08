@@ -16,7 +16,7 @@
  */
 import { coverPageSource, standardTermsSource } from "@/templates/sources";
 import { escapeHtml, renderMarkdown } from "./markdown";
-import type { MndaValues, Party } from "./fields";
+import { isPositiveNumber, type MndaValues, type Party } from "./fields";
 
 /** Placeholder shown where a required value has not been entered yet. */
 const BLANK = "__________";
@@ -42,11 +42,17 @@ const blank = () => `<span class="unfilled">${BLANK}</span>`;
  *     heading or list item in the agreement;
  *   - a `|` would be read as a table cell separator, which in the signature
  *     table shifts every following cell and can push a party's details out of
- *     the row entirely.
+ *     the row entirely;
+ *   - `*` and `[` … `]` would be read as emphasis and link syntax, letting
+ *     typed text bold itself or turn into a live hyperlink in the operative
+ *     text of a signed agreement.
  */
 function inlineText(value: string): string {
   return escapeHtml(value.trim())
     .replace(/\|/g, "&#124;")
+    .replace(/\*/g, "&#42;")
+    .replace(/\[/g, "&#91;")
+    .replace(/\]/g, "&#93;")
     .replace(/\r\n?|\n/g, "<br />");
 }
 
@@ -72,28 +78,66 @@ export function formatEffectiveDate(isoDate: string): string {
   });
 }
 
-const pluraliseYears = (years: string) =>
-  `${escapeHtml(years.trim())} year${years.trim() === "1" ? "" : "s"}`;
+/**
+ * Renders a term length, or a blank if the field cannot yet produce one.
+ *
+ * The number input is empty for as long as it takes to retype a value, and can
+ * hold zero or a negative number. Splicing those in unchecked produced
+ * "Expires  years from Effective Date" styled as though it were confirmed,
+ * disagreeing with the outstanding-items list about whether the field was done.
+ */
+const yearsOrBlank = (years: string) => {
+  const trimmed = years.trim();
+  if (!isPositiveNumber(trimmed)) return blank();
+  return highlight(`${escapeHtml(trimmed)} year${trimmed === "1" ? "" : "s"}`);
+};
 
 /**
- * Substitutes a single placeholder, refusing to continue if it is not found.
+ * Substitutes every placeholder in one pass over the original template.
  *
- * Every placeholder below is matched against the template literally, so an edit
+ * Two properties matter here, and chained `.replace()` calls give neither:
+ *
+ * A missing placeholder must fail loudly. Each is matched literally, so an edit
  * to `templates/mutual-nda-coverpage.md` - even one as small as a straight
- * quote replacing a curly one - would stop it matching. A plain `.replace()`
- * fails silently there and would quietly emit an agreement still carrying the
- * template's own placeholder text, which for a legal document is far worse than
- * a visible error.
+ * quote replacing a curly one - stops it matching. `.replace()` is silent in
+ * that case and would emit an agreement still carrying the template's own
+ * placeholder text, which for a legal document is far worse than an error.
+ *
+ * And a value already substituted must never be re-read as a placeholder. Every
+ * position is resolved against the untouched source, so text the user typed
+ * cannot collide with a placeholder that has yet to be filled.
  */
-function substitute(source: string, placeholder: string, value: string): string {
-  if (!source.includes(placeholder)) {
-    throw new Error(
-      `Mutual NDA template no longer contains the expected placeholder ` +
-        `${JSON.stringify(placeholder.slice(0, 60))}. ` +
-        `Reconcile src/lib/render.ts with templates/mutual-nda-coverpage.md.`,
-    );
+function fillTemplate(
+  source: string,
+  replacements: ReadonlyArray<readonly [placeholder: string, value: string]>,
+): string {
+  const found = replacements.map(([placeholder, value]) => {
+    const index = source.indexOf(placeholder);
+    if (index === -1) {
+      throw new Error(
+        `Mutual NDA template no longer contains the expected placeholder ` +
+          `${JSON.stringify(placeholder.slice(0, 60))}. ` +
+          `Reconcile src/lib/render.ts with templates/mutual-nda-coverpage.md.`,
+      );
+    }
+    return { index, placeholder, value };
+  });
+
+  found.sort((a, b) => a.index - b.index);
+
+  let result = "";
+  let cursor = 0;
+  for (const { index, placeholder, value } of found) {
+    if (index < cursor) {
+      throw new Error(
+        `Mutual NDA placeholders overlap at ${JSON.stringify(placeholder.slice(0, 60))}; ` +
+          `each must match a distinct part of the template.`,
+      );
+    }
+    result += source.slice(cursor, index) + value;
+    cursor = index + placeholder.length;
   }
-  return source.replace(placeholder, value);
+  return result + source.slice(cursor);
 }
 
 /**
@@ -118,7 +162,7 @@ function fillCoverPage(values: MndaValues): string {
     ],
     [
       "- [x]     Expires [1 year(s)] from Effective Date.",
-      `- [${tick(expires)}]     Expires ${highlight(pluraliseYears(values.mndaTermYears))} from Effective Date.`,
+      `- [${tick(expires)}]     Expires ${yearsOrBlank(values.mndaTermYears)} from Effective Date.`,
     ],
     [
       "- [ ]     Continues until terminated in accordance with the terms of the MNDA.",
@@ -126,7 +170,7 @@ function fillCoverPage(values: MndaValues): string {
     ],
     [
       "- [x]     [1 year(s)] from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.",
-      `- [${tick(yearsTerm)}]     ${highlight(pluraliseYears(values.confidentialityYears))} from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.`,
+      `- [${tick(yearsTerm)}]     ${yearsOrBlank(values.confidentialityYears)} from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.`,
     ],
     ["- [ ]     In perpetuity.", `- [${tick(!yearsTerm)}]     In perpetuity.`],
     ["[Fill in state]", orBlank(values.governingLaw)],
@@ -143,10 +187,7 @@ function fillCoverPage(values: MndaValues): string {
     [BLANK_SIGNATURE_TABLE, signatureTable(values)],
   ];
 
-  return replacements.reduce(
-    (document, [placeholder, value]) => substitute(document, placeholder, value),
-    coverPageSource,
-  );
+  return fillTemplate(coverPageSource, replacements);
 }
 
 /**

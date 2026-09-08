@@ -28,6 +28,18 @@ function completed(overrides: Partial<MndaValues> = {}): MndaValues {
 /** Rendered HTML with tags removed, for asserting on readable text. */
 const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
 
+/**
+ * What the reader actually sees: tags removed and entities decoded, so a
+ * character escaped to keep it inert still reads as itself.
+ */
+const visible = (html: string) =>
+  text(html)
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&");
+
 describe("cover page", () => {
   it("fills in the values the user supplied", () => {
     const html = renderDocument(completed()).coverPageHtml;
@@ -227,5 +239,116 @@ describe("determinism", () => {
     expect(renderDocument(defaultValues())).toEqual(
       renderDocument(defaultValues()),
     );
+  });
+});
+
+describe("markdown syntax in user input", () => {
+  it("does not let a user's text become bold in the agreement", () => {
+    const html = renderDocument(
+      completed({ purpose: "Evaluate **the acquisition** carefully." }),
+    ).coverPageHtml;
+
+    expect(html).not.toContain("<strong>the acquisition</strong>");
+    // The asterisks survive as characters the reader sees, just not as markup.
+    expect(visible(html)).toContain("**the acquisition**");
+  });
+
+  it("does not let a user's text become a hyperlink in the agreement", () => {
+    // A link in the operative text of a signed document must not be creatable
+    // by typing into a form field.
+    const html = renderDocument(
+      completed({ purpose: "See [pricing sheet](https://example.com/x)." }),
+    ).coverPageHtml;
+
+    expect(html).not.toContain('href="https://example.com/x"');
+  });
+
+  it("keeps markdown syntax inert in party details too", () => {
+    const html = renderDocument(
+      completed({
+        partyOne: {
+          printName: "Ada",
+          title: "CEO",
+          company: "**Acme**",
+          noticeAddress: "[here](https://example.com)",
+        },
+      }),
+    ).coverPageHtml;
+
+    expect(html).not.toContain("<strong>Acme</strong>");
+    expect(html).not.toContain('href="https://example.com"');
+  });
+});
+
+describe("incomplete term lengths", () => {
+  it("shows a blank, not a broken sentence, while the years field is empty", () => {
+    // Reachable by backspacing the number before typing a new one.
+    const html = renderDocument(
+      completed({ mndaTermType: "expires", mndaTermYears: "" }),
+    ).coverPageHtml;
+
+    expect(text(html)).not.toContain("Expires  years from");
+    expect(html).toContain('<span class="unfilled">');
+  });
+
+  it("does not present a zero or negative term as filled in", () => {
+    for (const years of ["0", "-2"]) {
+      const html = renderDocument(
+        completed({ mndaTermType: "expires", mndaTermYears: years }),
+      ).coverPageHtml;
+
+      expect(html, `years=${years}`).not.toContain(
+        `<span class="filled">${years} year`,
+      );
+    }
+  });
+
+  it("applies the same rule to the confidentiality term", () => {
+    const html = renderDocument(
+      completed({ confidentialityTermType: "years", confidentialityYears: "" }),
+    ).coverPageHtml;
+
+    expect(text(html)).not.toContain("  years from Effective Date, but");
+  });
+});
+
+/** The paragraph immediately following a given heading in the document. */
+function sectionUnder(html: string, heading: string): string {
+  const match = new RegExp(`<h3>${heading}</h3>\\s*<p>(.*?)</p>`, "s").exec(html);
+  if (!match) throw new Error(`No section found under heading ${heading}`);
+  return visible(match[1]);
+}
+
+describe("substitution is order-independent", () => {
+  it("does not mistake text the user typed for a later placeholder", () => {
+    // Substituting one placeholder at a time over the growing document meant a
+    // user could type a later placeholder's own wording and have the two values
+    // swap places. Asserting only that both strings appear somewhere would not
+    // catch that, so each is checked in its own section.
+    const html = renderDocument(
+      completed({
+        purpose: "List any modifications to the MNDA",
+        modifications: "Clause 5 amended.",
+      }),
+    ).coverPageHtml;
+
+    expect(sectionUnder(html, "Purpose")).toContain(
+      "List any modifications to the MNDA",
+    );
+    expect(sectionUnder(html, "MNDA Modifications")).toContain("Clause 5 amended.");
+    expect(sectionUnder(html, "MNDA Modifications")).not.toContain(
+      "List any modifications",
+    );
+  });
+
+  it("still fills every field when one value repeats the template's wording", () => {
+    const html = renderDocument(
+      completed({ purpose: "[Fill in state] and [Today’s date]" }),
+    ).coverPageHtml;
+
+    const body = visible(html);
+    expect(body).toContain("Governing Law: Delaware");
+    expect(sectionUnder(html, "Effective Date")).toContain("15 March 2026");
+    expect(sectionUnder(html, "Purpose")).toContain("[Fill in state]");
   });
 });
