@@ -162,6 +162,8 @@ button:hover {
 }
 
 .pane-form {
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid var(--line);
   background: var(--surface);
   position: sticky;
@@ -286,6 +288,125 @@ input:disabled {
 .choice-tail {
   color: var(--ink-muted);
   font-size: 0.875rem;
+}
+
+/* --- chat ---------------------------------------------------------------- */
+
+.mode-switch {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.mode-tab {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mode-tab-on {
+  border-bottom-color: var(--brand-blue);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The pane is a column: the log takes the slack and scrolls, so the composer
+   stays where the user left it rather than sliding off the bottom. */
+.chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0.75rem;
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+  min-height: 12rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.bubble {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  max-width: 90%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.bubble-assistant {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: var(--page);
+  border: 1px solid var(--line);
+}
+
+.bubble-user {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--brand-blue);
+  color: #ffffff;
+}
+
+.chat-thinking {
+  color: var(--ink-muted);
+  letter-spacing: 0.15em;
+}
+
+.chat-error {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #e0b4b0;
+  border-left: 3px solid #b3261e;
+  border-radius: 8px;
+}
+
+.chat-error p {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chat-error-note {
+  margin: 0.5rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+}
+
+.chat-composer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.chat-composer textarea {
+  flex: 1;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.chat-composer textarea:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 1px;
+}
+
+.chat-composer .button-submit {
+  margin-top: 0;
+  padding: 0.55rem 1.1rem;
 }
 
 /* --- preview status ------------------------------------------------------ */

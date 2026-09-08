@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ChatPanel from "@/components/ChatPanel";
 import NdaForm from "@/components/NdaForm";
 import DocumentPreview from "@/components/DocumentPreview";
 import { defaultValues, outstandingRequirements, type MndaValues } from "@/lib/fields";
+import { clearTranscript } from "@/lib/chat";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
+
+/** Chat fills the document in; the fields are there to correct it directly. */
+type Mode = "chat" | "fields";
 
 /**
  * The Mutual NDA creator, unchanged from PL-6 apart from moving out of
@@ -15,6 +20,10 @@ export default function NdaCreator() {
   // The saved draft is read after mount so the server and first client render
   // agree; until then the form shows defaults.
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [mode, setMode] = useState<Mode>("chat");
+  // Bumped on reset, to remount the chat rather than have it hold a
+  // conversation about a document that no longer exists.
+  const [conversation, setConversation] = useState(0);
 
   useEffect(() => {
     setValues(loadDraft());
@@ -31,7 +40,10 @@ export default function NdaCreator() {
   const handleReset = () => {
     if (!window.confirm("Clear the form and start a new agreement?")) return;
     clearDraft();
+    clearTranscript();
     setValues(defaultValues());
+    setConversation((count) => count + 1);
+    setMode("chat");
   };
 
   return (
@@ -40,7 +52,8 @@ export default function NdaCreator() {
         <div>
           <h1>Mutual NDA creator</h1>
           <p>
-            Fill in the details and the agreement builds as you type. Based on the{" "}
+            Tell the assistant what you need and the agreement builds as you talk.
+            Based on the{" "}
             <a
               href="https://commonpaper.com/standards/mutual-nda/1.0"
               rel="noreferrer noopener"
@@ -63,7 +76,32 @@ export default function NdaCreator() {
 
       <main className="panes">
         <section className="pane pane-form" aria-label="Agreement details">
-          <NdaForm values={values} onChange={setValues} />
+          <div className="mode-switch" role="tablist" aria-label="How to fill in the agreement">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "chat"}
+              className={mode === "chat" ? "mode-tab mode-tab-on" : "mode-tab"}
+              onClick={() => setMode("chat")}
+            >
+              Chat
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "fields"}
+              className={mode === "fields" ? "mode-tab mode-tab-on" : "mode-tab"}
+              onClick={() => setMode("fields")}
+            >
+              Edit fields
+            </button>
+          </div>
+
+          {mode === "chat" ? (
+            <ChatPanel key={conversation} values={values} onChange={setValues} />
+          ) : (
+            <NdaForm values={values} onChange={setValues} />
+          )}
         </section>
 
         <section className="pane pane-preview" aria-label="Document preview">

@@ -8,42 +8,25 @@
  * simply falls back to an empty form.
  */
 import { defaultValues, type MndaValues } from "./fields";
+import { readJson, remove, writeJson } from "./storage";
 
 const STORAGE_KEY = "prelegal.mnda.draft.v1";
 
 export function loadDraft(): MndaValues {
-  if (typeof window === "undefined") return defaultValues();
+  const parsed = readJson<Partial<MndaValues>>(STORAGE_KEY);
+  const base = defaultValues();
+  if (parsed === null || typeof parsed !== "object") return base;
 
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return defaultValues();
-    const parsed = JSON.parse(stored) as Partial<MndaValues>;
-    const base = defaultValues();
-    // Merge onto the defaults so a draft saved by an older version of the form
-    // - or one missing fields - still loads.
-    return {
-      ...base,
-      ...parsed,
-      partyOne: { ...base.partyOne, ...parsed.partyOne },
-      partyTwo: { ...base.partyTwo, ...parsed.partyTwo },
-    };
-  } catch {
-    return defaultValues();
-  }
+  // Merge onto the defaults so a draft saved by an older version of the form
+  // - or one missing fields - still loads.
+  return {
+    ...base,
+    ...parsed,
+    partyOne: { ...base.partyOne, ...parsed.partyOne },
+    partyTwo: { ...base.partyTwo, ...parsed.partyTwo },
+  };
 }
 
-export function saveDraft(values: MndaValues): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
-  } catch {
-    // Storage unavailable or full; the form still works for this session.
-  }
-}
+export const saveDraft = (values: MndaValues) => writeJson(STORAGE_KEY, values);
 
-export function clearDraft(): void {
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Nothing to do: the draft was never persisted.
-  }
-}
+export const clearDraft = () => remove(STORAGE_KEY);
