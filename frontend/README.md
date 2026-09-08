@@ -1,10 +1,11 @@
 # Prelegal frontend
 
-A Next.js app that turns the Common Paper Mutual NDA into a fill-in form: enter
-the key details, watch the agreement build as you type, then print it to PDF.
+A Next.js app that builds the Common Paper Mutual NDA out of a conversation:
+describe the agreement, watch it fill in, then print it to PDF.
 
 Implements [PL-6](https://trinitadewanti.atlassian.net/browse/PL-6), behind the
-login added in [PL-7](https://trinitadewanti.atlassian.net/browse/PL-7).
+login added in [PL-7](https://trinitadewanti.atlassian.net/browse/PL-7), driven
+by the chat added in [PL-8](https://trinitadewanti.atlassian.net/browse/PL-8).
 
 ## Running it
 
@@ -47,6 +48,9 @@ export in `out/`, which is what FastAPI serves in the container.
                             ── signed out? ──> LoginScreen
                             ── signed in? ──> AppShell > NdaCreator
                                                             │
+                    ChatPanel ──POST /api/chat/message──> reply + values
+                       or NdaForm ("Edit fields")          │
+                                              both setValues
 templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
                                               │             │
         src/lib/fields.ts (schema) ───────────┤             │
@@ -64,6 +68,16 @@ templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
   split dev setup.
 - **`components/AppShell.tsx`** is the signed-in chrome. The print stylesheet
   hides it along with the rest of the UI, so it never reaches the PDF.
+- **`components/ChatPanel.tsx`** holds the conversation. The server returns the
+  reply and the document's new values in one object, so the transcript and the
+  preview can never disagree about what was recorded.
+- **`NdaCreator`** owns `values`, and both the chat and the form call
+  `setValues`. One source of truth means there is no syncing to get wrong — and
+  the form is how a value gets *cleared*, which the assistant deliberately
+  cannot do.
+- **`lib/chat.ts`** keeps the transcript in `localStorage` and filters out turns
+  it cannot render, so a conversation saved by an older version of the app does
+  not put `undefined` on the page.
 
 - **`src/lib/fields.ts`** defines every cover-page field once. The form, the
   saved draft and the completeness check all read from it, so adding a field is
@@ -81,9 +95,9 @@ templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
 npm test
 ```
 
-85 tests, run with [Vitest](https://vitest.dev), covering the document-generation
-logic — the part where a defect ends up in a signed agreement — and the API
-client:
+104 tests, run with [Vitest](https://vitest.dev), covering the document-generation
+logic — the part where a defect ends up in a signed agreement — and the code
+that talks to the backend:
 
 - **`render.test.ts`** — values reach the right places, term checkboxes track
   the choice made, blanks are marked unfilled, and the escaping holds. Several
@@ -104,10 +118,25 @@ client:
 - **`api.test.ts`** — the session cookie is sent, the server's own error message
   reaches the user, a 204 has no body to parse, and an unreachable server is
   reported as such rather than as an answer.
+- **`chat.test.ts`** — the transcript and the document's values are posted
+  together, and a stored conversation in an older or broken shape degrades to
+  the greeting instead of rendering nothing.
+- **`schema-drift.test.ts`** — the form and `mnda-fields.json` describe the same
+  document. A field added to one and missed in the other fails here, which is
+  the whole reason the shared file exists. It also holds the two sides to the
+  same defaults and the same conditional requirements, since the assistant
+  decides what to confirm and what to ask for from that file.
+- **`ChatPanel.test.tsx`** — the only component test, and it exists because the
+  bug it describes actually happened: a failed send dropped the user's message
+  entirely, and *Try again* resent the conversation without it.
 
-Not yet covered: component rendering and interaction — which now includes the
-login screen and the auth gate — print output, and cross-browser behaviour.
-Those still need a person, or a browser-based runner with jsdom set up.
+Component tests run under jsdom, opted into per file with a
+`// @vitest-environment jsdom` docblock so the rest of the suite stays on the
+faster node environment.
+
+Not yet covered: the login screen and the auth gate, print output, and
+cross-browser behaviour. Those still need a person, or tests written in the
+style of `ChatPanel.test.tsx`.
 
 ## The templates are not stored here
 

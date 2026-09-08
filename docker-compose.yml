@@ -8,6 +8,11 @@ services:
     container_name: prelegal
     ports:
       - "8000:8000"
+    environment:
+      # Passed in rather than baked in: .env never enters the image. Compose
+      # reads it from .env in this directory. Without it the app still runs and
+      # the document still works; the assistant reports itself unavailable.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     healthcheck:
       test:
         - CMD

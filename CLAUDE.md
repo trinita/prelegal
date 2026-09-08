@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-Only the Mutual NDA is wired up so far, and it is filled in with a form rather than by chat. The AI chat, the remaining document types, and real authentication are still to build — see Implementation Status at the end of this file for what is actually in the repository.
+Only the Mutual NDA is wired up so far, filled in by chatting with an assistant. The remaining document types and real authentication are still to build — see Implementation Status at the end of this file for what is actually in the repository.
 
 ## Development process
 
@@ -22,7 +22,7 @@ When instructed to build a feature:
 
 When writing code to make calls to LLMs, use your Cerebras skill to use LiteLLM via OpenRouter to the `openrouter/openai/gpt-oss-120b` model with Cerebras as the inference provider. You should use Structured Outputs so that you can interpret the results and populate fields in the legal document.
 
-The key is `OPENROUTER_API_KEY`, in the `.env` file in the project root. `.env` is git-ignored and is not copied into the Docker image, so the container will need it passed in as an environment variable once there is code that reads it. Nothing calls an LLM yet; PL-8 is the first ticket that will.
+The key is `OPENROUTER_API_KEY`, in the `.env` file in the project root. `.env` is git-ignored and is not copied into the Docker image, so the container will need it passed in as an environment variable once there is code that reads it. The backend reads it in `app/ai/client.py`; nothing else calls an LLM.
 
 ## Technical design
 
@@ -76,7 +76,7 @@ here has not been built yet.
   `backend/app/session.py`. Real authentication is PL-10.
 - Start and stop scripts for Mac, Linux and Windows
 - The NDA creator itself is unchanged, now behind the login
-- 16 backend tests and 85 frontend tests
+- 16 backend tests and 85 frontend tests at the time
 
 ### Current API Endpoints
 - `POST /api/auth/login` — exchange a name for a session (creates the user if new)
@@ -84,9 +84,22 @@ here has not been built yet.
 - `GET /api/auth/me` — the signed-in user, or 401
 - `GET /api/health` — health check, used by the container healthcheck and start scripts
 
+### Completed (PL-8) — AI chat
+- Freeform chat with an assistant that asks about the document and fills it in
+- LiteLLM → OpenRouter → `openai/gpt-oss-120b`, provider pinned to Cerebras,
+  using Structured Outputs
+- `mnda-fields.json` at the repository root is the shared definition of the
+  document's fields; the frontend is tested against it so the two cannot drift
+- The manual form remains behind an *Edit fields* tab, for corrections and for
+  clearing values
+- Without `OPENROUTER_API_KEY` the chat reports itself unavailable and the rest
+  of the product still works
+- `POST /api/chat/message` requires a session, since each message costs money
+- Values the user has not spoken to are offered for confirmation, never
+  assumed: the template's defaults would otherwise be read as answers
+- 55 backend tests and 104 frontend tests
+
 ### Planned
-- **PL-8** — AI chat replaces the manual form for NDA creation, using LiteLLM
-  via OpenRouter with Cerebras inference and structured outputs
 - **PL-9** — all 11 document types from `catalog.json`, with the AI routing to
   the right one
 - **PL-10** — real authentication (email, password hashing, tokens) and document
@@ -101,6 +114,7 @@ here has not been built yet.
 | `backend/` | uv project: FastAPI, SQLAlchemy over SQLite, serves the API and the built frontend |
 | `frontend/` | Next.js app, statically exported to `out/` at build time |
 | `scripts/` | Start and stop, per platform; the four shell scripts share `scripts/_compose.sh` |
+| `mnda-fields.json` | The document's fields, shared by the form and the AI |
 | `Dockerfile` | Multi-stage: Node compiles the frontend, Python serves it |
 
 Each half has its own README covering architecture and tests.
@@ -111,8 +125,8 @@ Each half has its own README covering architecture and tests.
 scripts/start-mac.sh              # whole product on http://localhost:8000
 scripts/stop-mac.sh
 
-cd backend  && uv run pytest      # 16 tests
-cd frontend && npm test           # 85 tests
+cd backend  && uv run pytest      # 55 tests
+cd frontend && npm test           # 104 tests
 ```
 
 For frontend work, `npm run dev` serves pages on :3000 and calls the API on
