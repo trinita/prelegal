@@ -20,10 +20,27 @@ user produce a finished, signable document by filling in a short form.
 cd frontend
 npm install
 npm run dev          # http://localhost:3000
+npm test             # run the test suite
 ```
 
-See [`frontend/README.md`](frontend/README.md) for the app's architecture and
-scripts.
+See [`frontend/README.md`](frontend/README.md) for the app's architecture,
+scripts, and what the tests cover.
+
+## Testing
+
+The document-generation logic is covered by a Vitest suite in
+`frontend/src/lib/*.test.ts` — run it with `npm test` from `frontend/`. That is
+the code that decides what a signed agreement says, so it is where a defect
+matters most; several tests exist because the bug they describe actually
+occurred and reached review.
+
+New tests are expected to be shown failing before the fix that makes them pass.
+A test that has never failed for the right reason has not been demonstrated to
+test anything, and two of the tests written for this project passed against
+broken code until they were checked that way.
+
+Component rendering, print output, and cross-browser behaviour are not covered
+and still need a browser-based runner.
 
 ## Status
 
