@@ -40,7 +40,13 @@ pages on :3000 and calls across to :8000.
 | `app/schemas.py` | Request and response bodies |
 | `app/session.py` | The fake session (read the docstring) |
 | `app/users.py` | Finding a user by name, and creating one on first sight |
-| `app/ai/` | The assistant: field schema, prompts, the model call, and merging its answer |
+| `documents.json` | The ten documents besides the MNDA, and the terms each one's clauses reference |
+
+A handful of fields carry `"referenced": false`: no clause links to them, but the
+document is unusable without them. Common Paper expects a separate Order Form to
+state the price and name the product; this app generates one page, so those
+fields live here instead.
+| `app/ai/` | The assistant: catalogue, field schema, prompts, the model call, and merging its answer |
 | `app/routers/` | `auth.py`, `chat.py` and `health.py` |
 
 The engine is built inside `create_app` rather than at import time, and both the
@@ -76,7 +82,15 @@ LiteLLM → OpenRouter → `openai/gpt-oss-120b`, with the provider pinned to
 Cerebras and Structured Outputs so the answer is read as data rather than
 parsed out of prose.
 
-Three decisions are worth knowing before changing `app/ai/`:
+The assistant also chooses *which* document is being drafted. Every answer names
+one from a closed list built from the catalogue, so it can only pick something
+the templates actually support. Until one is settled the schema has no `updates`
+at all — asking for values before knowing the document would invite filling in a
+form it has not been shown. Choosing or changing a document starts it empty: a
+pilot agreement's answers are not what a HIPAA addendum needs, and carrying them
+across would put one document's details into another's clauses.
+
+Three more decisions are worth knowing before changing `app/ai/`:
 
 - **Every field in the response schema is nullable, and all of them are
   required.** Strict mode insists each property be present, so `null` is how the
@@ -122,7 +136,8 @@ open to anyone who can reach the port.
 | `PRELEGAL_DEV_ORIGINS` | `["http://localhost:3000", "http://127.0.0.1:3000"]` | Origins allowed to call the API with credentials |
 | `PRELEGAL_SESSION_COOKIE_NAME` | `prelegal_session` | Session cookie name |
 | `OPENROUTER_API_KEY` | none | The assistant's key. Without it, chat returns 503 and the rest of the app is unaffected. |
-| `PRELEGAL_FIELDS_PATH` | `mnda-fields.json` at the repo root | The shared field schema |
+| `PRELEGAL_FIELDS_PATH` | `mnda-fields.json` at the repo root | The Mutual NDA's cover page fields |
+| `PRELEGAL_DOCUMENTS_PATH` | `documents.json` at the repo root | The other ten documents |
 | `PRELEGAL_AI_MODEL` | `openrouter/openai/gpt-oss-120b` | Model, as LiteLLM names it |
 | `PRELEGAL_AI_PROVIDER` | `cerebras` | Pinned inference provider |
 | `PRELEGAL_MAX_HISTORY_MESSAGES` | `40` | Turns forwarded per request |
@@ -134,7 +149,7 @@ open to anyone who can reach the port.
 uv run pytest
 ```
 
-55 tests. No test makes a network call: the model is stubbed.
+77 tests. No test makes a network call: the model is stubbed.
 
 - The fake login, and the session cookie's edge cases — a cookie naming a user
   who no longer exists, a malformed one.
@@ -152,3 +167,7 @@ uv run pytest
 - What the assistant is shown: template defaults appear as needing confirmation
   rather than as answers, a value the user chose is settled even when it happens
   to equal the default, and no field name or code word reaches the model.
+- Choosing a document: the whole catalogue reaches the assistant, a document it
+  cannot produce leaves nothing started, an id the catalogue does not have is
+  refused, changing document does not carry the old answers over, and every one
+  of the eleven can be chosen and holds a value.

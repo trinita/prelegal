@@ -13,7 +13,8 @@ user produce a finished, signable document by filling in a short form.
 | `templates/` | The agreement templates, copied verbatim from Common Paper |
 | `catalog.json` | Name, description, filename and source repo for each template |
 | `frontend/` | Next.js app — the login screen, the chat, and the Mutual NDA creator |
-| `mnda-fields.json` | The document's fields, shared by the form and the AI |
+| `mnda-fields.json` | The Mutual NDA's cover page fields, shared by the form and the AI |
+| `documents.json` | The other ten documents, and the terms each one's clauses reference |
 | `backend/` | FastAPI + SQLite, which also serves the built frontend |
 | `scripts/` | Start and stop, per platform |
 | `Dockerfile` | Multi-stage build: Node compiles the frontend, Python serves it |
@@ -53,20 +54,29 @@ and tests.
 
 ## The assistant
 
-The Mutual NDA is filled in by chatting rather than by working through a form.
-The assistant asks about the agreement, records what you actually tell it, and
-the document rebuilds as it goes. Anything it gets wrong can be corrected by
-saying so, or by opening the *Edit fields* tab and typing over it.
+Agreements are drafted by chatting rather than by working through a form.
+Describe what you need — "we're selling our monitoring platform as a yearly
+subscription" — and the assistant works out which of the eleven documents fits,
+asks about it, and records what you actually tell it. The document rebuilds as
+it goes. Anything it gets wrong can be corrected by saying so, or by opening the
+*Edit fields* tab and typing over it.
+
+Ask for something it cannot produce and it says so plainly, and offers the
+nearest thing it can: an employment contract gets you an offer of a Professional
+Services Agreement, and nothing starts until you agree.
 
 It runs on `openai/gpt-oss-120b` through OpenRouter with Cerebras as the
 inference provider, and reads `OPENROUTER_API_KEY` from `.env`. Without a key
 the chat says it is unavailable; everything already recorded stays, the document
 still renders, and it still downloads.
 
-The fields it can fill are defined once, in `mnda-fields.json`. The backend
-builds the assistant's schema from that file and the frontend's form is tested
-against it, so a field added to one and missed in the other fails the suite
-rather than leaving a gap in a signed agreement.
+The fields it can fill are defined once — `mnda-fields.json` for the Mutual NDA,
+`documents.json` for the other ten. The backend builds the assistant's schema
+from those files and the frontend is tested against them, so a field added to
+one and missed in the other fails the suite rather than leaving a gap in a
+signed agreement. `documents.json` is checked against the templates themselves,
+in both directions: a clause referring to a term nobody is asked about fails,
+and so does asking about a term no clause mentions.
 
 ## Signing in
 
@@ -80,8 +90,8 @@ starts, so no account and nothing saved outlives a restart.
 ## Testing
 
 ```bash
-cd frontend && npm test          # 104 Vitest tests
-cd backend && uv run pytest      # 55 pytest tests
+cd frontend && npm test          # 213 Vitest tests
+cd backend && uv run pytest      # 77 pytest tests
 ```
 
 The frontend suite covers the document-generation logic in
@@ -90,8 +100,9 @@ says, so it is where a defect matters most; several tests exist because the bug
 they describe actually occurred and reached review — plus the API client. The
 backend suite covers the fake login, the session cookie's edge cases, the
 promise that a restart leaves an empty database, the race between two
-simultaneous first-time logins under the same name, and what the assistant is
-allowed to write into a document. No test calls the model.
+simultaneous first-time logins under the same name, what the assistant is
+allowed to write into a document, and how it chooses one. No test calls the
+model.
 
 New tests are expected to be shown failing before the fix that makes them pass.
 A test that has never failed for the right reason has not been demonstrated to
@@ -118,8 +129,12 @@ The AI chat ([PL-8](https://trinitadewanti.atlassian.net/browse/PL-8)) replaces
 the form as the way in: the agreement is filled in by describing it, with the
 form kept behind a tab for corrections.
 
-Still to come: the remaining eleven templates in `catalog.json` are curated but
-not yet wired up, and authentication is still a placeholder.
+All eleven documents ([PL-9](https://trinitadewanti.atlassian.net/browse/PL-9))
+are now supported. Only the Mutual NDA has a published cover page, so for the
+other ten the app generates the key terms page their clauses refer to and
+appends the standard terms unchanged.
+
+Still to come: authentication is still a placeholder.
 
 ## Licence
 
