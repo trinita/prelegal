@@ -20,6 +20,8 @@ always builds against the current templates.
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build and server |
+| `npm test` | Run the test suite once |
+| `npm run test:watch` | Re-run tests as files change |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run sync-templates` | Regenerate `src/templates/sources.ts` |
@@ -45,6 +47,33 @@ templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
   only the constructs these two documents use, which keeps the app free of
   runtime dependencies.
 - **`src/lib/draft.ts`** persists work-in-progress to `localStorage`.
+
+## Tests
+
+```bash
+npm test
+```
+
+68 tests, run with [Vitest](https://vitest.dev), covering the document-generation
+logic — the part where a defect ends up in a signed agreement:
+
+- **`render.test.ts`** — values reach the right places, term checkboxes track
+  the choice made, blanks are marked unfilled, and the escaping holds. Several
+  cases exist because the bug they describe actually occurred: a `|` in a notice
+  address splitting the signature table, newlines in a textarea introducing
+  headings into the agreement, and values being substituted into the standard
+  terms where a defined term belongs.
+- **`render-guard.test.ts`** — rendering fails loudly, naming the file to
+  reconcile, when a template no longer contains an expected placeholder.
+- **`markdown.test.ts`** — the renderer's blocks and inline formatting,
+  including ragged table rows and clauses separated by blank lines.
+- **`fields.test.ts`** — which fields are outstanding, and when a year count is
+  and is not required.
+- **`draft.test.ts`** — round trips, drafts saved by an older version of the
+  form, and storage that is blocked, full, or absent.
+
+Not yet covered: component rendering and interaction, print output, and
+cross-browser behaviour. Those still need a person, or a browser-based runner.
 
 ## The templates are not stored here
 
