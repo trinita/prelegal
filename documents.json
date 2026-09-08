@@ -1,0 +1,2145 @@
+{
+  "$comment": "Every document this product can generate, besides the Mutual NDA, which keeps its own cover page in mnda-fields.json because Common Paper publishes one. Each field here is a term the document's Standard Terms actually reference - the list is derived from the templates, so it cannot describe a document the templates do not. A generated key terms page defines these, and the Standard Terms follow verbatim: the clauses are written to read with the term rather than the value, so substituting into them would alter the legal wording.",
+  "documents": [
+    {
+      "id": "cloud-service-agreement",
+      "name": "Cloud Service Agreement",
+      "summary": "A subscription to a hosted software service.",
+      "aliases": [
+        "saas agreement",
+        "subscription agreement",
+        "cloud agreement",
+        "software as a service",
+        "hosting agreement"
+      ],
+      "template": "cloud-service-agreement.md",
+      "fields": [
+        {
+          "name": "additionalWarranties",
+          "term": "Additional Warranties",
+          "type": "string",
+          "label": "additional warranties",
+          "required": true,
+          "description": "Any promises beyond the standard ones. Write 'None' if there are none.",
+          "termForms": [
+            "Additional Warranties"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "chosenCourts",
+          "term": "Chosen Courts",
+          "type": "string",
+          "label": "chosen courts",
+          "required": true,
+          "description": "The courts that will hear any dispute, such as 'the state and federal courts in New Castle County, Delaware'.",
+          "termForms": [
+            "Chosen Courts"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customerCoveredClaim",
+          "term": "Customer Covered Claim",
+          "type": "string",
+          "label": "customer covered claim",
+          "required": true,
+          "description": "What the customer will defend the provider against, such as 'claims that the customer's own content infringes someone's rights'.",
+          "termForms": [
+            "Customer Covered Claim",
+            "Customer Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "dpa",
+          "term": "DPA",
+          "type": "string",
+          "label": "dpa",
+          "required": true,
+          "description": "The data processing agreement that applies, as a web address or document name. Write 'None' if there is none.",
+          "termForms": [
+            "DPA"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "effectiveDate",
+          "term": "Effective Date",
+          "type": "date",
+          "label": "effective date",
+          "required": true,
+          "description": "The date this agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "generalCapAmount",
+          "term": "General Cap Amount",
+          "type": "string",
+          "label": "general cap amount",
+          "required": true,
+          "description": "The usual ceiling on what either side can be made to pay, such as 'the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "General Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingLaw",
+          "term": "Governing Law",
+          "type": "enum",
+          "label": "governing law",
+          "required": true,
+          "description": "The US state whose law governs the agreement.",
+          "termForms": [
+            "Governing Law"
+          ],
+          "referenced": true,
+          "enum": [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "District of Columbia",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ]
+        },
+        {
+          "name": "increasedCapAmount",
+          "term": "Increased Cap Amount",
+          "type": "string",
+          "label": "increased cap amount",
+          "required": true,
+          "description": "The higher ceiling that applies to the increased claims, such as 'twice the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "Increased Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "increasedClaims",
+          "term": "Increased Claims",
+          "type": "string",
+          "label": "increased claims",
+          "required": true,
+          "description": "Which kinds of claim get the higher ceiling. Write 'None' if there are none.",
+          "termForms": [
+            "Increased Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "nonRenewalNoticeDate",
+          "term": "Non-Renewal Notice Date",
+          "type": "string",
+          "label": "non-renewal notice date",
+          "required": true,
+          "description": "How much warning a party must give to stop the subscription renewing, such as '30 days before the period ends'.",
+          "termForms": [
+            "Non-Renewal Notice Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "orderDate",
+          "term": "Order Date",
+          "type": "date",
+          "label": "order date",
+          "required": true,
+          "description": "The date the order is placed, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Order Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "paymentProcess",
+          "term": "Payment Process",
+          "type": "string",
+          "label": "payment process",
+          "required": true,
+          "description": "How and when payment is made, such as 'invoiced annually in advance, payable within 30 days'.",
+          "termForms": [
+            "Payment Process"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "providerCoveredClaim",
+          "term": "Provider Covered Claim",
+          "type": "string",
+          "label": "provider covered claim",
+          "required": true,
+          "description": "What the provider will defend the customer against, such as 'claims that the product infringes someone's intellectual property'.",
+          "termForms": [
+            "Provider Covered Claim",
+            "Provider Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "subscriptionPeriod",
+          "term": "Subscription Period",
+          "type": "string",
+          "label": "subscription period",
+          "required": true,
+          "description": "How long each subscription runs before it renews, such as '12 months'.",
+          "termForms": [
+            "Subscription Period",
+            "Subscription Periods"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "technicalSupport",
+          "term": "Technical Support",
+          "type": "string",
+          "label": "technical support",
+          "required": true,
+          "description": "The support the provider will give, such as 'email support during UK business hours'.",
+          "termForms": [
+            "Technical Support"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "unlimitedClaims",
+          "term": "Unlimited Claims",
+          "type": "string",
+          "label": "unlimited claims",
+          "required": true,
+          "description": "Which kinds of claim have no ceiling at all. Write 'None' if there are none.",
+          "termForms": [
+            "Unlimited Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "useLimitations",
+          "term": "Use Limitations",
+          "type": "string",
+          "label": "use limitations",
+          "required": true,
+          "description": "Any limits on how the product may be used, such as a number of users or a single environment. Write 'None' if there are none.",
+          "termForms": [
+            "Use Limitations"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "cloudService",
+          "term": "Cloud Service",
+          "type": "string",
+          "label": "what the customer is subscribing to",
+          "required": true,
+          "description": "The hosted service being sold, described plainly - 'the Acme monitoring platform, including the web dashboard and API'.",
+          "termForms": [],
+          "referenced": false
+        },
+        {
+          "name": "fees",
+          "term": "Fees",
+          "type": "string",
+          "label": "what the customer pays",
+          "required": true,
+          "description": "What the customer pays and how often, such as '\u00a32,000 per month' or '$24,000 per year'.",
+          "termForms": [],
+          "referenced": false
+        }
+      ]
+    },
+    {
+      "id": "software-license-agreement",
+      "name": "Software License Agreement",
+      "summary": "A licence for software the customer installs and runs themselves.",
+      "aliases": [
+        "software licence",
+        "on-premise agreement",
+        "installed software",
+        "eula",
+        "end user licence"
+      ],
+      "template": "software-license-agreement.md",
+      "fields": [
+        {
+          "name": "additionalWarranties",
+          "term": "Additional Warranties",
+          "type": "string",
+          "label": "additional warranties",
+          "required": true,
+          "description": "Any promises beyond the standard ones. Write 'None' if there are none.",
+          "termForms": [
+            "Additional Warranties"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "chosenCourts",
+          "term": "Chosen Courts",
+          "type": "string",
+          "label": "chosen courts",
+          "required": true,
+          "description": "The courts that will hear any dispute, such as 'the state and federal courts in New Castle County, Delaware'.",
+          "termForms": [
+            "Chosen Courts"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customerCoveredClaim",
+          "term": "Customer Covered Claim",
+          "type": "string",
+          "label": "customer covered claim",
+          "required": true,
+          "description": "What the customer will defend the provider against, such as 'claims that the customer's own content infringes someone's rights'.",
+          "termForms": [
+            "Customer Covered Claim",
+            "Customer Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "deletionProcedure",
+          "term": "Deletion Procedure",
+          "type": "string",
+          "label": "deletion procedure",
+          "required": true,
+          "description": "How the customer's data is deleted when the agreement ends.",
+          "termForms": [
+            "Deletion Procedure"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "effectiveDate",
+          "term": "Effective Date",
+          "type": "date",
+          "label": "effective date",
+          "required": true,
+          "description": "The date this agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "generalCapAmount",
+          "term": "General Cap Amount",
+          "type": "string",
+          "label": "general cap amount",
+          "required": true,
+          "description": "The usual ceiling on what either side can be made to pay, such as 'the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "General Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingLaw",
+          "term": "Governing Law",
+          "type": "enum",
+          "label": "governing law",
+          "required": true,
+          "description": "The US state whose law governs the agreement.",
+          "termForms": [
+            "Governing Law"
+          ],
+          "referenced": true,
+          "enum": [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "District of Columbia",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ]
+        },
+        {
+          "name": "increasedCapAmount",
+          "term": "Increased Cap Amount",
+          "type": "string",
+          "label": "increased cap amount",
+          "required": true,
+          "description": "The higher ceiling that applies to the increased claims, such as 'twice the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "Increased Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "increasedClaims",
+          "term": "Increased Claims",
+          "type": "string",
+          "label": "increased claims",
+          "required": true,
+          "description": "Which kinds of claim get the higher ceiling. Write 'None' if there are none.",
+          "termForms": [
+            "Increased Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "licenseLimits",
+          "term": "License Limits",
+          "type": "string",
+          "label": "license limits",
+          "required": true,
+          "description": "The limits of the licence, such as the number of installations or named users.",
+          "termForms": [
+            "License Limits"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "nonRenewalNoticeDate",
+          "term": "Non-Renewal Notice Date",
+          "type": "string",
+          "label": "non-renewal notice date",
+          "required": true,
+          "description": "How much warning a party must give to stop the subscription renewing, such as '30 days before the period ends'.",
+          "termForms": [
+            "Non-Renewal Notice Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "orderDate",
+          "term": "Order Date",
+          "type": "date",
+          "label": "order date",
+          "required": true,
+          "description": "The date the order is placed, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Order Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "paymentProcess",
+          "term": "Payment Process",
+          "type": "string",
+          "label": "payment process",
+          "required": true,
+          "description": "How and when payment is made, such as 'invoiced annually in advance, payable within 30 days'.",
+          "termForms": [
+            "Payment Process"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "permittedUses",
+          "term": "Permitted Uses",
+          "type": "string",
+          "label": "permitted uses",
+          "required": true,
+          "description": "What the software may be used for, such as 'internal business purposes only'.",
+          "termForms": [
+            "Permitted Uses"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "providerCoveredClaim",
+          "term": "Provider Covered Claim",
+          "type": "string",
+          "label": "provider covered claim",
+          "required": true,
+          "description": "What the provider will defend the customer against, such as 'claims that the product infringes someone's intellectual property'.",
+          "termForms": [
+            "Provider Covered Claim",
+            "Provider Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "subscriptionPeriod",
+          "term": "Subscription Period",
+          "type": "string",
+          "label": "subscription period",
+          "required": true,
+          "description": "How long each subscription runs before it renews, such as '12 months'.",
+          "termForms": [
+            "Subscription Period",
+            "Subscription Periods"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "unlimitedClaims",
+          "term": "Unlimited Claims",
+          "type": "string",
+          "label": "unlimited claims",
+          "required": true,
+          "description": "Which kinds of claim have no ceiling at all. Write 'None' if there are none.",
+          "termForms": [
+            "Unlimited Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "warrantyPeriod",
+          "term": "Warranty Period",
+          "type": "string",
+          "label": "warranty period",
+          "required": true,
+          "description": "How long the software is warranted after delivery, such as '90 days'.",
+          "termForms": [
+            "Warranty Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "software",
+          "term": "Software",
+          "type": "string",
+          "label": "what is being licensed",
+          "required": true,
+          "description": "The software being licensed, described plainly, including its version if that matters.",
+          "termForms": [],
+          "referenced": false
+        },
+        {
+          "name": "fees",
+          "term": "Fees",
+          "type": "string",
+          "label": "what the customer pays",
+          "required": true,
+          "description": "What the customer pays and how often, such as '$10,000 per year for up to 50 seats'.",
+          "termForms": [],
+          "referenced": false
+        }
+      ]
+    },
+    {
+      "id": "professional-services-agreement",
+      "name": "Professional Services Agreement",
+      "summary": "Consulting or professional work delivered under statements of work.",
+      "aliases": [
+        "consulting agreement",
+        "services agreement",
+        "psa",
+        "statement of work",
+        "contractor agreement"
+      ],
+      "template": "professional-services-agreement.md",
+      "fields": [
+        {
+          "name": "additionalWarranties",
+          "term": "Additional Warranties",
+          "type": "string",
+          "label": "additional warranties",
+          "required": true,
+          "description": "Any promises beyond the standard ones. Write 'None' if there are none.",
+          "termForms": [
+            "Additional Warranties"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "chosenCourts",
+          "term": "Chosen Courts",
+          "type": "string",
+          "label": "chosen courts",
+          "required": true,
+          "description": "The courts that will hear any dispute, such as 'the state and federal courts in New Castle County, Delaware'.",
+          "termForms": [
+            "Chosen Courts"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customerCoveredClaim",
+          "term": "Customer Covered Claim",
+          "type": "string",
+          "label": "customer covered claim",
+          "required": true,
+          "description": "What the customer will defend the provider against, such as 'claims that the customer's own content infringes someone's rights'.",
+          "termForms": [
+            "Customer Covered Claim",
+            "Customer Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customerObligations",
+          "term": "Customer Obligations",
+          "type": "string",
+          "label": "customer obligations",
+          "required": true,
+          "description": "What the customer must do for the work to proceed, such as 'provide test data and a named point of contact'. Write 'None' if there are none.",
+          "termForms": [
+            "Customer Obligations"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customerPolicies",
+          "term": "Customer Policies",
+          "type": "string",
+          "label": "customer policies",
+          "required": true,
+          "description": "Any customer rules the provider must follow, such as site access or IT policies. Write 'None' if there are none.",
+          "termForms": [
+            "Customer Policies"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "dpa",
+          "term": "DPA",
+          "type": "string",
+          "label": "dpa",
+          "required": true,
+          "description": "The data processing agreement that applies, as a web address or document name. Write 'None' if there is none.",
+          "termForms": [
+            "DPA"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "deliverable",
+          "term": "Deliverable",
+          "type": "string",
+          "label": "deliverable",
+          "required": true,
+          "description": "What the provider will hand over under a statement of work, such as 'a written integration plan and a working prototype'. Write 'None' for time-and-materials work with nothing to hand over.",
+          "termForms": [
+            "Deliverable",
+            "Deliverables"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "effectiveDate",
+          "term": "Effective Date",
+          "type": "date",
+          "label": "effective date",
+          "required": true,
+          "description": "The date this agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "fees",
+          "term": "Fees",
+          "type": "string",
+          "label": "fees",
+          "required": true,
+          "description": "What the customer pays the provider for the services, as set out in the statement of work.",
+          "termForms": [
+            "Fees"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "generalCapAmount",
+          "term": "General Cap Amount",
+          "type": "string",
+          "label": "general cap amount",
+          "required": true,
+          "description": "The usual ceiling on what either side can be made to pay, such as 'the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "General Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingLaw",
+          "term": "Governing Law",
+          "type": "enum",
+          "label": "governing law",
+          "required": true,
+          "description": "The US state whose law governs the agreement.",
+          "termForms": [
+            "Governing Law"
+          ],
+          "referenced": true,
+          "enum": [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "District of Columbia",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ]
+        },
+        {
+          "name": "increasedCapAmount",
+          "term": "Increased Cap Amount",
+          "type": "string",
+          "label": "increased cap amount",
+          "required": true,
+          "description": "The higher ceiling that applies to the increased claims, such as 'twice the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "Increased Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "increasedClaims",
+          "term": "Increased Claims",
+          "type": "string",
+          "label": "increased claims",
+          "required": true,
+          "description": "Which kinds of claim get the higher ceiling. Write 'None' if there are none.",
+          "termForms": [
+            "Increased Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "insuranceMinimums",
+          "term": "Insurance Minimums",
+          "type": "string",
+          "label": "insurance minimums",
+          "required": true,
+          "description": "The insurance BOTH parties must carry - the clause binds each of them equally - such as '$1,000,000 per occurrence of commercial general liability insurance'.",
+          "termForms": [
+            "Insurance Minimums"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "paymentPeriod",
+          "term": "Payment Period",
+          "type": "string",
+          "label": "payment period",
+          "required": true,
+          "description": "How long the customer has to pay an invoice, such as '30 days from the invoice date'.",
+          "termForms": [
+            "Payment Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "providerCoveredClaim",
+          "term": "Provider Covered Claim",
+          "type": "string",
+          "label": "provider covered claim",
+          "required": true,
+          "description": "What the provider will defend the customer against, such as 'claims that the product infringes someone's intellectual property'.",
+          "termForms": [
+            "Provider Covered Claim",
+            "Provider Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "rejectionPeriod",
+          "term": "Rejection Period",
+          "type": "string",
+          "label": "rejection period",
+          "required": true,
+          "description": "How long the customer has to reject a deliverable, such as '10 business days after delivery'.",
+          "termForms": [
+            "Rejection Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "resubmissionPeriod",
+          "term": "Resubmission Period",
+          "type": "string",
+          "label": "resubmission period",
+          "required": true,
+          "description": "How long the provider has to fix and resubmit a rejected deliverable, such as '10 business days'.",
+          "termForms": [
+            "Resubmission Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "sowTerm",
+          "term": "SOW Term",
+          "type": "string",
+          "label": "sow term",
+          "required": true,
+          "description": "How long a statement of work runs, unless that statement of work says otherwise.",
+          "termForms": [
+            "SOW Term"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "securityPolicy",
+          "term": "Security Policy",
+          "type": "string",
+          "label": "security policy",
+          "required": true,
+          "description": "Where the provider's security policy can be read: a web address or a document name.",
+          "termForms": [
+            "Security Policy"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "timeOfAssignment",
+          "term": "Time of Assignment",
+          "type": "string",
+          "label": "time of assignment",
+          "required": true,
+          "description": "When ownership of the deliverables passes to the customer, such as 'on payment in full'.",
+          "termForms": [
+            "Time of Assignment"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "unlimitedClaims",
+          "term": "Unlimited Claims",
+          "type": "string",
+          "label": "unlimited claims",
+          "required": true,
+          "description": "Which kinds of claim have no ceiling at all. Write 'None' if there are none.",
+          "termForms": [
+            "Unlimited Claims"
+          ],
+          "referenced": true
+        }
+      ]
+    },
+    {
+      "id": "data-processing-agreement",
+      "name": "Data Processing Agreement",
+      "summary": "How personal data is handled between a controller and a processor, for GDPR.",
+      "aliases": [
+        "dpa",
+        "gdpr addendum",
+        "data protection agreement",
+        "processor agreement"
+      ],
+      "template": "data-processing-agreement.md",
+      "fields": [
+        {
+          "name": "agreement",
+          "term": "Agreement",
+          "type": "string",
+          "label": "agreement",
+          "required": true,
+          "description": "The main agreement this one attaches to, by name and date.",
+          "termForms": [
+            "Agreement"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "approvedSubprocessors",
+          "term": "Approved Subprocessors",
+          "type": "string",
+          "label": "approved subprocessors",
+          "required": true,
+          "description": "The subprocessors the customer has agreed to: a list, or where the current list is published.",
+          "termForms": [
+            "Approved Subprocessors"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "categoriesOfDataSubjects",
+          "term": "Categories of Data Subjects",
+          "type": "string",
+          "label": "categories of data subjects",
+          "required": true,
+          "description": "Whose personal data is handled, such as 'the customer's employees and its end users'.",
+          "termForms": [
+            "Categories of Data Subjects"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "categoriesOfPersonalData",
+          "term": "Categories of Personal Data",
+          "type": "string",
+          "label": "categories of personal data",
+          "required": true,
+          "description": "What personal data is handled, such as 'names, email addresses and IP addresses'.",
+          "termForms": [
+            "Categories of Personal Data"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "durationOfProcessing",
+          "term": "Duration of Processing",
+          "type": "string",
+          "label": "duration of processing",
+          "required": true,
+          "description": "How long personal data will be processed for - usually the length of the agreement.",
+          "termForms": [
+            "Duration of Processing"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "frequencyOfTransfer",
+          "term": "Frequency of Transfer",
+          "type": "string",
+          "label": "frequency of transfer",
+          "required": true,
+          "description": "How often personal data moves between the parties, such as 'continuously'.",
+          "termForms": [
+            "Frequency of Transfer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingMemberState",
+          "term": "Governing Member State",
+          "type": "string",
+          "label": "governing member state",
+          "required": true,
+          "description": "The EU or EEA member state whose data protection law applies, such as 'Ireland'.",
+          "termForms": [
+            "Governing Member State"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "natureAndPurposeOfProcessing",
+          "term": "Nature and Purpose of Processing",
+          "type": "string",
+          "label": "nature and purpose of processing",
+          "required": true,
+          "description": "Why the personal data is handled, such as 'to provide and support the product'.",
+          "termForms": [
+            "Nature and Purpose of Processing"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "providerSecurityContact",
+          "term": "Provider Security Contact",
+          "type": "string",
+          "label": "provider security contact",
+          "required": true,
+          "description": "Who to contact at the provider about security: an email address.",
+          "termForms": [
+            "Provider Security Contact"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "securityPolicy",
+          "term": "Security Policy",
+          "type": "string",
+          "label": "security policy",
+          "required": true,
+          "description": "Where the provider's security policy can be read: a web address or a document name.",
+          "termForms": [
+            "Security Policy"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "specialCategoryData",
+          "term": "Special Category Data",
+          "type": "string",
+          "label": "special category data",
+          "required": true,
+          "description": "Any sensitive personal data handled, such as health or biometric data. Write 'None' if there is none.",
+          "termForms": [
+            "Special Category Data"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "specialCategoryDataRestrictionsOrSafeguards",
+          "term": "Special Category Data Restrictions or Safeguards",
+          "type": "string",
+          "label": "special category data restrictions or safeguards",
+          "required": true,
+          "description": "Any restrictions or safeguards recorded for sensitive personal data, such as 'encrypted at rest, access limited to named staff'. This records what the parties have agreed; the operative security obligations live in the Security Policy. Write 'None' if there is none.",
+          "termForms": [
+            "Special Category Data Restrictions or Safeguards"
+          ],
+          "referenced": true
+        }
+      ]
+    },
+    {
+      "id": "business-associate-agreement",
+      "name": "Business Associate Agreement",
+      "summary": "A HIPAA addendum covering protected health information.",
+      "aliases": [
+        "baa",
+        "hipaa agreement",
+        "phi agreement",
+        "health data agreement"
+      ],
+      "template": "business-associate-agreement.md",
+      "fields": [
+        {
+          "name": "agreement",
+          "term": "Agreement",
+          "type": "string",
+          "label": "agreement",
+          "required": true,
+          "description": "The main agreement this one attaches to, by name and date.",
+          "termForms": [
+            "Agreement"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "baaEffectiveDate",
+          "term": "BAA Effective Date",
+          "type": "date",
+          "label": "baa effective date",
+          "required": true,
+          "description": "The date this business associate agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "BAA Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "breachNotificationPeriod",
+          "term": "Breach Notification Period",
+          "type": "string",
+          "label": "breach notification period",
+          "required": true,
+          "description": "How quickly a breach of protected health information must be reported, such as 'within 10 business days'.",
+          "termForms": [
+            "Breach Notification Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "company",
+          "term": "Company",
+          "type": "string",
+          "label": "company",
+          "required": true,
+          "description": "The covered entity whose protected health information the provider will handle, by full legal name.",
+          "termForms": [
+            "Company"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "limitations",
+          "term": "Limitations",
+          "type": "string",
+          "label": "limitations",
+          "required": true,
+          "description": "Any limits on how protected health information may be used or disclosed. Write 'None' if there are none.",
+          "termForms": [
+            "Limitations"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The business associate handling protected health information on the company's behalf, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        }
+      ]
+    },
+    {
+      "id": "service-level-agreement",
+      "name": "Service Level Agreement",
+      "summary": "Uptime and support commitments for a hosted service, with credits when they are missed.",
+      "aliases": [
+        "sla",
+        "uptime agreement",
+        "support agreement",
+        "service levels"
+      ],
+      "template": "service-level-agreement.md",
+      "fields": [
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "responseTimeCredit",
+          "term": "Response Time Credit",
+          "type": "string",
+          "label": "response time credit",
+          "required": true,
+          "description": "What the customer gets when a response time is missed.",
+          "termForms": [
+            "Response Time Credit"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "scheduledDowntime",
+          "term": "Scheduled Downtime",
+          "type": "string",
+          "label": "scheduled downtime",
+          "required": true,
+          "description": "Maintenance that does not count against uptime, such as 'Sundays 02:00-04:00 UTC, with 48 hours notice'.",
+          "termForms": [
+            "Scheduled Downtime"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "subscriptionPeriod",
+          "term": "Subscription Period",
+          "type": "string",
+          "label": "subscription period",
+          "required": true,
+          "description": "How long each subscription runs before it renews, such as '12 months'.",
+          "termForms": [
+            "Subscription Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "supportChannel",
+          "term": "Support Channel",
+          "type": "string",
+          "label": "support channel",
+          "required": true,
+          "description": "How support is requested, such as 'support@provider.example'.",
+          "termForms": [
+            "Support Channel"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "targetResponseTime",
+          "term": "Target Response Time",
+          "type": "string",
+          "label": "target response time",
+          "required": true,
+          "description": "How quickly support will respond, ideally by severity, such as '1 hour for critical, 1 business day otherwise'.",
+          "termForms": [
+            "Target Response Time"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "targetUptime",
+          "term": "Target Uptime",
+          "type": "string",
+          "label": "target uptime",
+          "required": true,
+          "description": "The uptime the provider commits to, such as '99.9% each calendar month'.",
+          "termForms": [
+            "Target Uptime"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "uptimeCredit",
+          "term": "Uptime Credit",
+          "type": "string",
+          "label": "uptime credit",
+          "required": true,
+          "description": "What the customer gets when uptime is missed, such as '10% of the monthly fee for each 0.1% below target'.",
+          "termForms": [
+            "Uptime Credit"
+          ],
+          "referenced": true
+        }
+      ]
+    },
+    {
+      "id": "ai-addendum",
+      "name": "AI Addendum",
+      "summary": "An addendum covering AI features on top of an existing agreement.",
+      "aliases": [
+        "ai agreement",
+        "machine learning addendum",
+        "llm addendum",
+        "ai terms"
+      ],
+      "template": "ai-addendum.md",
+      "fields": [
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "improvementRestrictions",
+          "term": "Improvement Restrictions",
+          "type": "string",
+          "label": "improvement restrictions",
+          "required": true,
+          "description": "Limits on using customer data to improve the service. Write 'None' if there are none.",
+          "termForms": [
+            "Improvement Restrictions"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "trainingData",
+          "term": "Training Data",
+          "type": "string",
+          "label": "training data",
+          "required": true,
+          "description": "What data the provider may use to train its models. Write 'None' if it may use none.",
+          "termForms": [
+            "Training Data"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "trainingPurposes",
+          "term": "Training Purposes",
+          "type": "string",
+          "label": "training purposes",
+          "required": true,
+          "description": "What the provider may train for, such as 'improving the accuracy of the product's own features'.",
+          "termForms": [
+            "Training Purposes"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "trainingRestrictions",
+          "term": "Training Restrictions",
+          "type": "string",
+          "label": "training restrictions",
+          "required": true,
+          "description": "Limits on training, such as 'no training on customer content'. Write 'None' if there are none.",
+          "termForms": [
+            "Training Restrictions"
+          ],
+          "referenced": true
+        }
+      ]
+    },
+    {
+      "id": "pilot-agreement",
+      "name": "Pilot Agreement",
+      "summary": "A time-boxed paid or unpaid trial or proof of concept.",
+      "aliases": [
+        "poc agreement",
+        "proof of concept",
+        "trial agreement",
+        "evaluation agreement"
+      ],
+      "template": "pilot-agreement.md",
+      "fields": [
+        {
+          "name": "chosenCourts",
+          "term": "Chosen Courts",
+          "type": "string",
+          "label": "chosen courts",
+          "required": true,
+          "description": "The courts that will hear any dispute, such as 'the state and federal courts in New Castle County, Delaware'.",
+          "termForms": [
+            "Chosen Courts"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "customer",
+          "term": "Customer",
+          "type": "string",
+          "label": "customer",
+          "required": true,
+          "description": "The company receiving the product or service, by full legal name.",
+          "termForms": [
+            "Customer"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "effectiveDate",
+          "term": "Effective Date",
+          "type": "date",
+          "label": "effective date",
+          "required": true,
+          "description": "The date this agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "generalCapAmount",
+          "term": "General Cap Amount",
+          "type": "string",
+          "label": "general cap amount",
+          "required": true,
+          "description": "The usual ceiling on what either side can be made to pay, such as 'the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "General Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingLaw",
+          "term": "Governing Law",
+          "type": "enum",
+          "label": "governing law",
+          "required": true,
+          "description": "The US state whose law governs the agreement.",
+          "termForms": [
+            "Governing Law"
+          ],
+          "referenced": true,
+          "enum": [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "District of Columbia",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ]
+        },
+        {
+          "name": "noticeAddress",
+          "term": "Notice Address",
+          "type": "string",
+          "label": "notice address",
+          "required": true,
+          "description": "Where formal notices are sent: an email address or a postal address.",
+          "termForms": [
+            "Notice Address"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "pilotPeriod",
+          "term": "Pilot Period",
+          "type": "string",
+          "label": "pilot period",
+          "required": true,
+          "description": "How long the pilot runs, such as '60 days from the effective date'.",
+          "termForms": [
+            "Pilot Period"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company supplying the product or service, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "product",
+          "term": "Product",
+          "type": "string",
+          "label": "what is being piloted",
+          "required": true,
+          "description": "The product being trialled, described plainly.",
+          "termForms": [],
+          "referenced": false
+        },
+        {
+          "name": "fees",
+          "term": "Fees",
+          "type": "string",
+          "label": "what the customer pays, if anything",
+          "required": true,
+          "description": "What the customer pays for the pilot. Write 'None' for an unpaid pilot.",
+          "termForms": [],
+          "referenced": false
+        }
+      ]
+    },
+    {
+      "id": "design-partner-agreement",
+      "name": "Design Partner Agreement",
+      "summary": "An early-access partnership where the partner gives feedback on a product in development.",
+      "aliases": [
+        "design partnership",
+        "early access agreement",
+        "beta agreement",
+        "alpha partner"
+      ],
+      "template": "design-partner-agreement.md",
+      "fields": [
+        {
+          "name": "chosenCourts",
+          "term": "Chosen Courts",
+          "type": "string",
+          "label": "chosen courts",
+          "required": true,
+          "description": "The courts that will hear any dispute, such as 'the state and federal courts in New Castle County, Delaware'.",
+          "termForms": [
+            "Chosen Courts"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "effectiveDate",
+          "term": "Effective Date",
+          "type": "date",
+          "label": "effective date",
+          "required": true,
+          "description": "The date this agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "fees",
+          "term": "Fees",
+          "type": "string",
+          "label": "fees",
+          "required": true,
+          "description": "What the partner pays, if anything. Write 'None' if the arrangement is unpaid.",
+          "termForms": [
+            "Fees"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingLaw",
+          "term": "Governing Law",
+          "type": "enum",
+          "label": "governing law",
+          "required": true,
+          "description": "The US state whose law governs the agreement.",
+          "termForms": [
+            "Governing Law"
+          ],
+          "referenced": true,
+          "enum": [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "District of Columbia",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ]
+        },
+        {
+          "name": "noticeAddress",
+          "term": "Notice Address",
+          "type": "string",
+          "label": "notice address",
+          "required": true,
+          "description": "Where formal notices are sent: an email address or a postal address.",
+          "termForms": [
+            "Notice Address"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "partner",
+          "term": "Partner",
+          "type": "string",
+          "label": "partner",
+          "required": true,
+          "description": "The company getting early access to the product, by full legal name.",
+          "termForms": [
+            "Partner"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "program",
+          "term": "Program",
+          "type": "string",
+          "label": "program",
+          "required": true,
+          "description": "What taking part in the design partner programme involves, such as 'monthly feedback calls and early access to new features'.",
+          "termForms": [
+            "Program"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "provider",
+          "term": "Provider",
+          "type": "string",
+          "label": "provider",
+          "required": true,
+          "description": "The company building the product, by full legal name.",
+          "termForms": [
+            "Provider"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "term",
+          "term": "Term",
+          "type": "string",
+          "label": "term",
+          "required": true,
+          "description": "How long the agreement runs, such as '12 months from the effective date'.",
+          "termForms": [
+            "Term"
+          ],
+          "referenced": true
+        }
+      ]
+    },
+    {
+      "id": "partnership-agreement",
+      "name": "Partnership Agreement",
+      "summary": "A referral, reseller or co-marketing arrangement.",
+      "aliases": [
+        "reseller agreement",
+        "referral agreement",
+        "channel partner",
+        "co-marketing agreement",
+        "affiliate agreement"
+      ],
+      "template": "partnership-agreement.md",
+      "fields": [
+        {
+          "name": "additionalWarranties",
+          "term": "Additional Warranties",
+          "type": "string",
+          "label": "additional warranties",
+          "required": true,
+          "description": "Any promises beyond the standard ones. Write 'None' if there are none.",
+          "termForms": [
+            "Additional Warranties"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "brandGuidelines",
+          "term": "Brand Guidelines",
+          "type": "string",
+          "label": "brand guidelines",
+          "required": true,
+          "description": "Where each side's brand rules can be read: a web address or a document name.",
+          "termForms": [
+            "Brand Guidelines"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "chosenCourts",
+          "term": "Chosen Courts",
+          "type": "string",
+          "label": "chosen courts",
+          "required": true,
+          "description": "The courts that will hear any dispute, such as 'the state and federal courts in New Castle County, Delaware'.",
+          "termForms": [
+            "Chosen Courts"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "company",
+          "term": "Company",
+          "type": "string",
+          "label": "company",
+          "required": true,
+          "description": "The company whose product or customers are being referred or resold, by full legal name.",
+          "termForms": [
+            "Company"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "companyCoveredClaim",
+          "term": "Company Covered Claim",
+          "type": "string",
+          "label": "company covered claim",
+          "required": true,
+          "description": "What the company will defend the other side against.",
+          "termForms": [
+            "Company Covered Claim"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "dpa",
+          "term": "DPA",
+          "type": "string",
+          "label": "dpa",
+          "required": true,
+          "description": "The data processing agreement that applies, as a web address or document name. Write 'None' if there is none.",
+          "termForms": [
+            "DPA"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "effectiveDate",
+          "term": "Effective Date",
+          "type": "date",
+          "label": "effective date",
+          "required": true,
+          "description": "The date this agreement takes effect, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "Effective Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "endDate",
+          "term": "End Date",
+          "type": "date",
+          "label": "end date",
+          "required": true,
+          "description": "The date the partnership ends, as ISO 8601 yyyy-mm-dd.",
+          "termForms": [
+            "End Date"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "generalCapAmount",
+          "term": "General Cap Amount",
+          "type": "string",
+          "label": "general cap amount",
+          "required": true,
+          "description": "The usual ceiling on what either side can be made to pay, such as 'the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "General Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "governingLaw",
+          "term": "Governing Law",
+          "type": "enum",
+          "label": "governing law",
+          "required": true,
+          "description": "The US state whose law governs the agreement.",
+          "termForms": [
+            "Governing Law"
+          ],
+          "referenced": true,
+          "enum": [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "District of Columbia",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ]
+        },
+        {
+          "name": "increasedCapAmount",
+          "term": "Increased Cap Amount",
+          "type": "string",
+          "label": "increased cap amount",
+          "required": true,
+          "description": "The higher ceiling that applies to the increased claims, such as 'twice the fees paid in the 12 months before the claim'.",
+          "termForms": [
+            "Increased Cap Amount"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "increasedClaims",
+          "term": "Increased Claims",
+          "type": "string",
+          "label": "increased claims",
+          "required": true,
+          "description": "Which kinds of claim get the higher ceiling. Write 'None' if there are none.",
+          "termForms": [
+            "Increased Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "obligations",
+          "term": "Obligations",
+          "type": "string",
+          "label": "obligations",
+          "required": true,
+          "description": "What each side has agreed to do, such as 'the partner refers customers and the company pays a referral fee'.",
+          "termForms": [
+            "Obligations"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "partner",
+          "term": "Partner",
+          "type": "string",
+          "label": "partner",
+          "required": true,
+          "description": "The company doing the referring, reselling or co-marketing, by full legal name.",
+          "termForms": [
+            "Partner"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "partnerCoveredClaim",
+          "term": "Partner Covered Claim",
+          "type": "string",
+          "label": "partner covered claim",
+          "required": true,
+          "description": "What the partner will defend the other side against.",
+          "termForms": [
+            "Partner Covered Claim",
+            "Partner Covered Claims"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "paymentProcess",
+          "term": "Payment Process",
+          "type": "string",
+          "label": "payment process",
+          "required": true,
+          "description": "How and when payment is made, such as 'invoiced annually in advance, payable within 30 days'.",
+          "termForms": [
+            "Payment Process"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "paymentSchedule",
+          "term": "Payment Schedule",
+          "type": "string",
+          "label": "payment schedule",
+          "required": true,
+          "description": "When payments are made, such as 'quarterly in arrears, within 30 days of quarter end'.",
+          "termForms": [
+            "Payment Schedule"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "territory",
+          "term": "Territory",
+          "type": "string",
+          "label": "territory",
+          "required": true,
+          "description": "Where the partner may operate, such as 'the United Kingdom and Ireland', or 'worldwide'.",
+          "termForms": [
+            "Territory"
+          ],
+          "referenced": true
+        },
+        {
+          "name": "unlimitedClaims",
+          "term": "Unlimited Claims",
+          "type": "string",
+          "label": "unlimited claims",
+          "required": true,
+          "description": "Which kinds of claim have no ceiling at all. Write 'None' if there are none.",
+          "termForms": [
+            "Unlimited Claims"
+          ],
+          "referenced": true
+        }
+      ]
+    }
+  ]
+}

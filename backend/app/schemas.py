@@ -43,6 +43,8 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
+    #: Which document is being drafted, or None while that is still unsettled.
+    documentId: str | None = None
     #: The document as the browser currently has it, so the assistant can be
     #: told what is already recorded rather than inferring it from the history.
     values: dict[str, Any]
@@ -50,6 +52,10 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    #: The document being drafted after this turn. It can differ from the
+    #: request's when the user has just said what they want, or changed to
+    #: something else.
+    documentId: str | None
     #: The complete document values, merged on the server. Returning the whole
     #: thing rather than a patch keeps the merge in one place.
     values: dict[str, Any]

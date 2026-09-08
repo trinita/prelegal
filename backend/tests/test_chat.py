@@ -16,15 +16,33 @@ def signed_in(client: TestClient) -> TestClient:
 
 
 def stub_model(monkeypatch: pytest.MonkeyPatch, answer: dict[str, Any]) -> list[list]:
-    """Replace the model call, capturing the messages it was sent."""
+    """Replace the model call, capturing the messages it was sent.
+
+    Answers default to staying on the Mutual NDA, so a test only says
+    "document" when the document itself is what it is about.
+    """
     sent: list[list] = []
+    full = {"document": "mutual-nda", **answer}
 
     def fake_complete(settings, messages, response_schema):
         sent.append(messages)
-        return answer
+        return full
 
     monkeypatch.setattr(chat, "complete", fake_complete)
     return sent
+
+
+def ask(client: TestClient, content: str = "hello", **body):
+    """A chat request already on the Mutual NDA, unless told otherwise."""
+    return client.post(
+        "/api/chat/message",
+        json={
+            "messages": [{"role": "user", "content": content}],
+            "documentId": "mutual-nda",
+            "values": {},
+            **body,
+        },
+    )
 
 
 def test_a_reply_and_the_extracted_values_come_back(
@@ -39,6 +57,7 @@ def test_a_reply_and_the_extracted_values_come_back(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "Delaware law please"}],
+            "documentId": "mutual-nda",
             "values": {"governingLaw": ""},
         },
     )
@@ -55,7 +74,8 @@ def test_what_is_still_missing_comes_back_too(
 
     response = signed_in.post(
         "/api/chat/message",
-        json={"messages": [{"role": "user", "content": "Delaware"}], "values": {}},
+        json={"messages": [{"role": "user", "content": "Delaware"}], "documentId": "mutual-nda",
+            "values": {}},
     )
 
     outstanding = response.json()["outstanding"]
@@ -76,6 +96,7 @@ def test_the_model_is_told_what_is_already_recorded(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "hello"}],
+            "documentId": "mutual-nda",
             "values": {"jurisdiction": "New Castle, DE"},
         },
     )
@@ -95,6 +116,7 @@ def test_the_model_is_never_shown_a_field_name_or_a_code_word(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "hello"}],
+            "documentId": "mutual-nda",
             "values": {"mndaTermType": "untilTerminated", "partyOne": {"printName": "Ada"}},
         },
     )
@@ -115,6 +137,7 @@ def test_a_default_is_offered_for_confirmation_rather_than_taken_as_answered(
         json={
             "messages": [{"role": "user", "content": "hello"}],
             # What the browser sends on the first turn: the template's defaults.
+            "documentId": "mutual-nda",
             "values": {"mndaTermYears": "1", "confidentialityYears": "1"},
         },
     )
@@ -136,6 +159,7 @@ def test_a_value_the_user_chose_is_settled_even_if_it_equals_the_default(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "two years"}],
+            "documentId": "mutual-nda",
             "values": {"mndaTermYears": "2"},
         },
     )
@@ -157,6 +181,7 @@ def test_a_year_count_is_outstanding_only_when_the_term_has_one(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "hi"}],
+            "documentId": "mutual-nda",
             "values": {"mndaTermType": "expires", "mndaTermYears": ""},
         },
     ).json()["outstanding"]
@@ -165,6 +190,7 @@ def test_a_year_count_is_outstanding_only_when_the_term_has_one(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "hi"}],
+            "documentId": "mutual-nda",
             "values": {"mndaTermType": "untilTerminated", "mndaTermYears": ""},
         },
     ).json()["outstanding"]
@@ -179,7 +205,10 @@ def test_history_is_capped(
     sent = stub_model(monkeypatch, {"reply": "ok", "updates": {}})
     messages = [{"role": "user", "content": f"message {i}"} for i in range(120)]
 
-    signed_in.post("/api/chat/message", json={"messages": messages, "values": {}})
+    signed_in.post(
+        "/api/chat/message",
+        json={"messages": messages, "documentId": "mutual-nda", "values": {}},
+    )
 
     forwarded = [m for m in sent[0] if m["role"] != "system"]
     assert len(forwarded) == 40
@@ -196,6 +225,7 @@ def test_an_over_long_message_is_truncated(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "x" * 10_000}],
+            "documentId": "mutual-nda",
             "values": {},
         },
     )
@@ -216,7 +246,8 @@ def test_an_unavailable_model_is_503_not_500(
 
     response = signed_in.post(
         "/api/chat/message",
-        json={"messages": [{"role": "user", "content": "hello"}], "values": {}},
+        json={"messages": [{"role": "user", "content": "hello"}], "documentId": "mutual-nda",
+            "values": {}},
     )
 
     assert response.status_code == 503
@@ -232,6 +263,7 @@ def test_a_model_answer_missing_its_updates_does_not_fail_the_turn(
         "/api/chat/message",
         json={
             "messages": [{"role": "user", "content": "hi"}],
+            "documentId": "mutual-nda",
             "values": {"purpose": "Evaluating a partnership"},
         },
     )
@@ -248,13 +280,17 @@ def test_signing_in_is_required(
 
     response = client.post(
         "/api/chat/message",
-        json={"messages": [{"role": "user", "content": "hello"}], "values": {}},
+        json={"messages": [{"role": "user", "content": "hello"}], "documentId": "mutual-nda",
+            "values": {}},
     )
 
     assert response.status_code == 401
 
 
 def test_an_empty_conversation_is_rejected(signed_in: TestClient) -> None:
-    response = signed_in.post("/api/chat/message", json={"messages": [], "values": {}})
+    response = signed_in.post(
+        "/api/chat/message",
+        json={"messages": [], "documentId": "mutual-nda", "values": {}},
+    )
 
     assert response.status_code == 422

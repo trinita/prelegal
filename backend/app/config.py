@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     #: tested against the frontend's copy.
     fields_path: Path = BACKEND_DIR.parent / "mnda-fields.json"
 
+    #: The other ten documents, described by the terms their Standard Terms
+    #: reference.
+    documents_path: Path = BACKEND_DIR.parent / "documents.json"
+
     #: Pinned by CLAUDE.md: LiteLLM to OpenRouter, gpt-oss-120b, on Cerebras.
     ai_model: str = "openrouter/openai/gpt-oss-120b"
     ai_provider: str = "cerebras"
