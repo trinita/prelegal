@@ -12,18 +12,48 @@ import { MUTUAL_NDA_ID, findDocument, type TermValues } from "./documents";
 export interface Workspace {
   /** Null until the user has settled on a document. */
   documentId: string | null;
+  /**
+   * The saved document this is, once the server has one — a different thing
+   * from `documentId`, which says which of the eleven templates is being
+   * drafted. Null while the document is still only in this browser.
+   */
+  recordId: number | null;
   values: MndaValues | TermValues;
 }
 
-export const emptyWorkspace = (): Workspace => ({ documentId: null, values: {} });
+export const emptyWorkspace = (): Workspace => ({
+  documentId: null,
+  recordId: null,
+  values: {},
+});
 
 /** A workspace for a document just chosen, with nothing filled in yet. */
 export function startDocument(documentId: string): Workspace {
   return {
     documentId,
+    // No saved row yet: one is created once the document is known to be real.
+    recordId: null,
     // The MNDA opens with what the Common Paper template prints; the generated
     // documents have no published defaults to carry.
     values: documentId === MUTUAL_NDA_ID ? defaultValues() : {},
+  };
+}
+
+/** A workspace restored from a saved document. */
+export function restoreDocument(
+  recordId: number,
+  documentId: string,
+  values: Workspace["values"],
+): Workspace {
+  return {
+    documentId,
+    recordId,
+    // A document saved before it was filled in has no values; the MNDA's
+    // template defaults belong there just as they would on a new one.
+    values:
+      documentId === MUTUAL_NDA_ID
+        ? { ...defaultValues(), ...(values as Partial<MndaValues>) }
+        : values,
   };
 }
 

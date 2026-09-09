@@ -10,7 +10,7 @@
  * around its published cover page; the other ten share a form and a renderer
  * driven by the catalogue.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChatPanel from "@/components/ChatPanel";
 import NdaForm from "@/components/NdaForm";
 import TermsForm from "@/components/TermsForm";
@@ -24,12 +24,15 @@ import {
   outstandingTerms,
   type TermValues,
 } from "@/lib/documents";
-import { clearTranscript } from "@/lib/chat";
+import { clearTranscript, saveTranscript, type ChatTurn } from "@/lib/chat";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/draft";
+import { createDocument, fetchDocument, saveDocument } from "@/lib/api";
+import { debounce } from "@/lib/debounce";
 import {
   emptyWorkspace,
   isMutualNda,
   isRenderable,
+  restoreDocument,
   startDocument,
   type Workspace,
 } from "@/lib/workspace";
@@ -37,7 +40,17 @@ import {
 /** Chat fills the document in; the fields are there to correct it directly. */
 type Mode = "chat" | "fields";
 
-export default function DocumentCreator() {
+/** Long enough that typing a sentence is one save, short enough to feel saved. */
+const SAVE_AFTER_MS = 800;
+
+interface Props {
+  /** A saved document to reopen, or null to carry on with the local draft. */
+  openRecordId?: number | null;
+  /** Called once that document is open, so it is not opened twice. */
+  onOpened?: () => void;
+}
+
+export default function DocumentCreator({ openRecordId, onOpened }: Props = {}) {
   const [workspace, setWorkspace] = useState<Workspace>(emptyWorkspace);
   // The saved draft is read after mount so the server and first client render
   // agree; until then the workspace is empty.
@@ -52,18 +65,119 @@ export default function DocumentCreator() {
   const [replying, setReplying] = useState(false);
 
   useEffect(() => {
+    // A document was picked from the list: it, not the local draft, is what
+    // should be on screen.
+    if (openRecordId != null) return;
+
     setWorkspace(loadDraft());
     setDraftLoaded(true);
-  }, []);
+  }, [openRecordId]);
+
+  useEffect(() => {
+    if (openRecordId == null) return;
+
+    let abandoned = false;
+
+    fetchDocument(openRecordId)
+      .then((saved) => {
+        if (abandoned) return;
+
+        const restored = restoreDocument(
+          saved.id,
+          saved.documentType,
+          saved.values as Workspace["values"],
+        );
+        // Written to storage before the chat remounts, because that is where
+        // ChatPanel reads its transcript from as it comes up.
+        saveDraft(restored);
+        saveTranscript(saved.transcript as ChatTurn[]);
+        setWorkspace(restored);
+        setConversation((count) => count + 1);
+        setMode("chat");
+        setDraftLoaded(true);
+        onOpened?.();
+      })
+      .catch(() => {
+        // Deleted, or belonging to someone else. Falling back to the local
+        // draft is better than a screen with nothing on it.
+        if (abandoned) return;
+        setWorkspace(loadDraft());
+        setDraftLoaded(true);
+        onOpened?.();
+      });
+
+    return () => {
+      abandoned = true;
+    };
+  }, [openRecordId, onOpened]);
 
   useEffect(() => {
     if (draftLoaded) saveDraft(workspace);
   }, [workspace, draftLoaded]);
 
+  // One debounced saver for the life of the component, so successive edits
+  // reset the same timer rather than each starting their own.
+  const saveValues = useMemo(
+    () =>
+      debounce((recordId: number, values: Workspace["values"]) => {
+        // Failures are swallowed exactly as the localStorage ones are: the
+        // document on screen is unaffected and still downloadable, and there is
+        // nothing the user could usefully do about it mid-sentence.
+        void saveDocument(recordId, { values }).catch(() => {});
+      }, SAVE_AFTER_MS),
+    [],
+  );
+
+  // Flushed, not cancelled. Leaving for the documents list unmounts this
+  // component, and that is exactly when an edit made a moment ago is still
+  // waiting — cancelling would discard it, and reopening the document would
+  // fetch the older version back from the server without a word.
+  useEffect(() => saveValues.flush, [saveValues]);
+
+  useEffect(() => {
+    if (!draftLoaded || workspace.recordId === null) return;
+    saveValues(workspace.recordId, workspace.values);
+  }, [workspace.recordId, workspace.values, draftLoaded, saveValues]);
+
+  useEffect(() => {
+    // A document exists but has never been saved: give it a row to live in.
+    //
+    // No guard against a second call in flight, deliberately. This only runs
+    // when the document, the record id or the loaded flag change, and none of
+    // them changes while a request is out — so there is nothing to guard
+    // against. A flag would also do harm: switching document mid-request is
+    // exactly when a *new* row is wanted, and the flag would swallow it.
+    if (!draftLoaded || workspace.documentId === null) return;
+    if (workspace.recordId !== null) return;
+
+    const documentId = workspace.documentId;
+
+    createDocument(documentId)
+      .then((created) => {
+        setWorkspace((previous) =>
+          // Only if they are still on the document this row was made for.
+          // Switching in the meantime starts a different one, and the answers
+          // now on screen are not the ones this row was created to hold.
+          previous.documentId === documentId && previous.recordId === null
+            ? { ...previous, recordId: created.id }
+            : previous,
+        );
+      })
+      .catch(() => {
+        // Unsaved, but still perfectly usable: the document is in the browser
+        // and prints from there. The next document chosen tries again.
+      });
+  }, [workspace.documentId, workspace.recordId, draftLoaded]);
+
   const handleReset = () => {
-    if (!window.confirm("Clear this document and start again?")) return;
+    if (!window.confirm("Start a new document? This one stays in your documents.")) {
+      return;
+    }
+    // Only the local copy is cleared. The saved row is left exactly as it is —
+    // starting over begins another document rather than discarding this one.
     clearDraft();
     clearTranscript();
+    saveValues.cancel();
     setWorkspace(emptyWorkspace());
     setConversation((count) => count + 1);
     setMode("chat");
@@ -103,7 +217,7 @@ export default function DocumentCreator() {
         </div>
         <div className="masthead-actions">
           <button type="button" className="button-secondary" onClick={handleReset}>
-            Start over
+            New document
           </button>
           <button
             type="button"

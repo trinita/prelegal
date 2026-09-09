@@ -3,10 +3,17 @@
 /**
  * Who is signed in, for the whole app.
  *
- * There is no real authentication yet (PL-7 asks for a fake login), so this
- * holds a name and an id and nothing more. The shape is the part that matters:
- * when PL-10 adds passwords, the screens consuming this context should not have
- * to change.
+ * PL-7 left a note here that the shape was the part that mattered, and that
+ * screens other than the login should not have to change when passwords
+ * arrived. They did not: `status` and `user` mean what they always meant, and
+ * only the arguments to `signIn` are different.
+ *
+ * What is new is clearing the local draft whenever the signed-in person
+ * changes. The draft used to be harmless — one browser, one nameless user — but
+ * accounts make it a leak: sign out, hand the laptop over, and the next person
+ * to sign in would find the last one's half-typed agreement waiting. Restoring
+ * an existing session on page load deliberately does not clear it, so a refresh
+ * still keeps what you were working on.
  */
 import {
   createContext,
@@ -19,9 +26,13 @@ import {
 import {
   fetchCurrentUser,
   signIn as requestSignIn,
+  signUp as requestSignUp,
   signOut as requestSignOut,
+  type Credentials,
   type User,
 } from "@/lib/api";
+import { clearDraft } from "@/lib/draft";
+import { clearTranscript } from "@/lib/chat";
 
 /** "checking" covers the first request, before we know either way. */
 type AuthStatus = "checking" | "signedOut" | "signedIn";
@@ -29,7 +40,8 @@ type AuthStatus = "checking" | "signedOut" | "signedIn";
 interface AuthValue {
   status: AuthStatus;
   user: User | null;
-  signIn: (name: string) => Promise<void>;
+  signIn: (credentials: Credentials) => Promise<void>;
+  signUp: (registration: Credentials & { name: string }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -61,11 +73,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signIn = useCallback(async (name: string) => {
-    const signedIn = await requestSignIn(name);
-    setUser(signedIn);
-    setStatus("signedIn");
+  /** Whatever this browser was drafting belonged to whoever was here before. */
+  const forgetLocalWork = useCallback(() => {
+    clearDraft();
+    clearTranscript();
   }, []);
+
+  const signIn = useCallback(
+    async (credentials: Credentials) => {
+      const signedIn = await requestSignIn(credentials);
+      forgetLocalWork();
+      setUser(signedIn);
+      setStatus("signedIn");
+    },
+    [forgetLocalWork],
+  );
+
+  const signUp = useCallback(
+    async (registration: Credentials & { name: string }) => {
+      const registered = await requestSignUp(registration);
+      forgetLocalWork();
+      setUser(registered);
+      setStatus("signedIn");
+    },
+    [forgetLocalWork],
+  );
 
   const signOut = useCallback(async () => {
     try {
@@ -77,18 +109,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // instead would surface as an unhandled rejection, since the only caller
       // is a click handler with nowhere to put an error.
       //
-      // The cost: if the request never reached the server, its cookie is still
-      // valid and a refresh signs the user back in. Worth revisiting in PL-10,
-      // when a session is something more than a name.
+      // The cost used to be that a failed request left a still-valid cookie
+      // behind. Since PL-10 the server deletes the session row, so a sign-out
+      // that reached it is final; one that did not is the only case where a
+      // refresh could sign the user back in.
     } finally {
+      forgetLocalWork();
       setUser(null);
       setStatus("signedOut");
     }
-  }, []);
+  }, [forgetLocalWork]);
 
   const value = useMemo(
-    () => ({ status, user, signIn, signOut }),
-    [status, user, signIn, signOut],
+    () => ({ status, user, signIn, signUp, signOut }),
+    [status, user, signIn, signUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
