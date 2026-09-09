@@ -1,12 +1,31 @@
 """Request and response bodies."""
 
+import re
+from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class LoginRequest(BaseModel):
+#: Deliberately permissive: enough to catch a typo, not enough to reject a
+#: valid address this project has no way to deliver mail to anyway.
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
+
+
+def _clean_email(value: str) -> str:
+    normalised = value.strip().lower()
+    if not EMAIL_PATTERN.match(normalised):
+        raise ValueError("Enter a valid email address")
+    return normalised
+
+
+class SignUpRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
+    email: str = Field(max_length=255)
+    #: Eight characters is the floor, not advice. A maximum matters more than it
+    #: looks: scrypt hashes whatever it is given, so an unbounded password is an
+    #: unbounded amount of work for anyone who can reach the sign-up form.
+    password: str = Field(min_length=8, max_length=200)
 
     @field_validator("name")
     @classmethod
@@ -16,12 +35,28 @@ class LoginRequest(BaseModel):
             raise ValueError("Name must not be blank")
         return stripped
 
+    @field_validator("email")
+    @classmethod
+    def normalise_email(cls, value: str) -> str:
+        return _clean_email(value)
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(max_length=255)
+    password: str = Field(min_length=1, max_length=200)
+
+    @field_validator("email")
+    @classmethod
+    def normalise_email(cls, value: str) -> str:
+        return _clean_email(value)
+
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: str
+    email: str
 
 
 class HealthResponse(BaseModel):
@@ -60,3 +95,44 @@ class ChatResponse(BaseModel):
     #: thing rather than a patch keeps the merge in one place.
     values: dict[str, Any]
     outstanding: list[str]
+
+
+class CreateDocumentRequest(BaseModel):
+    """Starting a document. Only its type: the answers arrive as they are given."""
+
+    documentType: str = Field(min_length=1, max_length=80)
+
+
+class SaveDocumentRequest(BaseModel):
+    """A change to a saved document.
+
+    Either half can be sent alone. The chat saves a transcript, the form saves
+    values, and neither should have to send the other's state back to leave it
+    undisturbed.
+    """
+
+    values: dict[str, Any] | None = None
+    transcript: list[ChatMessage] | None = None
+
+    @model_validator(mode="after")
+    def require_something_to_save(self) -> "SaveDocumentRequest":
+        if self.values is None and self.transcript is None:
+            raise ValueError("Send values, a transcript, or both")
+        return self
+
+
+class DocumentSummary(BaseModel):
+    """One row of the list of documents someone has made."""
+
+    id: int
+    documentType: str
+    #: Derived from the catalogue at read time rather than stored, so a document
+    #: cannot end up labelled with a name the catalogue no longer uses.
+    title: str
+    createdAt: datetime
+    updatedAt: datetime
+
+
+class DocumentDetail(DocumentSummary):
+    values: dict[str, Any]
+    transcript: list[ChatMessage]

@@ -32,3 +32,45 @@ def client(settings: Settings) -> Iterator[TestClient]:
 def session_factory(client: TestClient) -> sessionmaker[Session]:
     """Sessions against the running app's database, for testing below the API."""
     return client.app.state.session_factory
+
+
+#: The account most tests sign in as. Registering through the real endpoint is
+#: what puts a usable session cookie in the client's jar; there is no shortcut
+#: that mints one, because a test that forged its own would stop proving the
+#: sign-in path works.
+ACCOUNT = {
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "password": "correct horse battery",
+}
+
+
+@pytest.fixture
+def signed_in(client: TestClient) -> TestClient:
+    """A client with an account, already signed in."""
+    client.post("/api/auth/signup", json=ACCOUNT)
+    return client
+
+
+@pytest.fixture
+def sign_up_another(client: TestClient):
+    """Registers a second person on the same client, and signs in as them.
+
+    A second `TestClient` would not do: entering one runs the lifespan handler,
+    which drops the schema, so the first user's documents would be gone before
+    the test could ask whether they were reachable. Signing up here simply
+    replaces the session cookie, which is exactly what a second person sitting
+    down at the same browser would do.
+    """
+
+    def register(email: str = "grace@example.com") -> None:
+        client.post(
+            "/api/auth/signup",
+            json={
+                "name": "Grace Hopper",
+                "email": email,
+                "password": "nanoseconds are short",
+            },
+        )
+
+    return register

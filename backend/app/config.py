@@ -37,6 +37,10 @@ class Settings(BaseSettings):
 
     session_cookie_name: str = "prelegal_session"
 
+    #: How long a session cookie is offered for. The session itself dies
+    #: with the database on the next restart, whichever comes first.
+    session_max_age_seconds: int = 60 * 60 * 24 * 30
+
     #: The shared definition of the document's fields, read by the AI and
     #: tested against the frontend's copy.
     fields_path: Path = BACKEND_DIR.parent / "mnda-fields.json"

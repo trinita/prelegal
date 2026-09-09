@@ -1,7 +1,6 @@
 """The conversation that fills in the document."""
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.ai.catalogue import find, load_catalogue
 from app.ai.client import AiUnavailable, complete
@@ -15,9 +14,9 @@ from app.ai.prompts import (
 )
 from app.ai.schema import build_response_schema
 from app.config import Settings
-from app.dependencies import get_db, get_settings
+from app.dependencies import get_current_user, get_settings
+from app.models import User
 from app.schemas import ChatRequest, ChatResponse
-from app.session import current_user
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -25,17 +24,12 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 @router.post("/message", response_model=ChatResponse)
 def send_message(
     payload: ChatRequest,
-    request: Request,
-    db: Session = Depends(get_db),
+    # Every message costs money, so this is not left open to anyone who can
+    # reach the port. Nothing else here needs the database: what the user is
+    # drafting arrives in the request and is saved by /api/documents.
+    user: User = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> ChatResponse:
-    # Every message costs money, so this is not left open to anyone who can
-    # reach the port - placeholder session or not.
-    if current_user(request, db, settings) is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not signed in"
-        )
-
     if not payload.messages:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
