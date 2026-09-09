@@ -8,8 +8,9 @@
  * there is no moment where the chat says a date was recorded and the document
  * disagrees.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError } from "@/lib/api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ApiError, saveDocument } from "@/lib/api";
+import { debounce } from "@/lib/debounce";
 import {
   GREETING,
   loadTranscript,
@@ -61,6 +62,26 @@ export default function ChatPanel({
   useEffect(() => {
     if (restored) saveTranscript(turns);
   }, [turns, restored]);
+
+  // The transcript is saved to the document it belongs to, so reopening it
+  // brings the conversation back and the assistant still knows what was said.
+  const saveTurns = useMemo(
+    () =>
+      debounce((recordId: number, saved: ChatTurn[]) => {
+        void saveDocument(recordId, { transcript: saved }).catch(() => {});
+      }, 800),
+    [],
+  );
+
+  // Flushed rather than cancelled, for the same reason the values are: this
+  // panel unmounts on a switch to the fields tab and on "New document", and a
+  // reply that arrived a moment before should not be lost to either.
+  useEffect(() => saveTurns.flush, [saveTurns]);
+
+  useEffect(() => {
+    if (!restored || workspace.recordId === null) return;
+    saveTurns(workspace.recordId, turns);
+  }, [turns, restored, workspace.recordId, saveTurns]);
 
   useEffect(() => {
     foot.current?.scrollIntoView({ behavior: "smooth", block: "end" });

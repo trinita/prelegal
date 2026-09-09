@@ -12,10 +12,16 @@
   --ink: #1a1a18;
   --ink-muted: #5f5f58;
   --line: #dcdcd6;
-  --accent: #1f4b8f;
+  /* The accent is the brand blue, not a blue of its own. Until PL-10 these
+     were #1f4b8f, a colour that appears nowhere in the project's palette, so
+     the product's primary action was off-brand on every screen. */
+  --accent: #209dd7;
   --accent-ink: #ffffff;
-  --focus: #1f4b8f;
+  --accent-deep: #032147;
+  --focus: #209dd7;
   --ok: #1f6b3f;
+  --warn-ground: #fdf4dd;
+  --warn-line: #ecad0a;
 
   /* Prelegal brand, used by the login screen and the app bar. These are fixed
      values rather than scheme-aware ones: a brand mark that shifts with the
@@ -38,10 +44,15 @@
     --ink: #ececea;
     --ink-muted: #a0a09a;
     --line: #35353b;
-    --accent: #7ba7e8;
-    --accent-ink: #10101a;
-    --focus: #7ba7e8;
+    /* Lightened for contrast on a dark ground, but still the brand hue
+       rather than a different colour wearing its place. */
+    --accent: #57bde9;
+    --accent-ink: #06121f;
+    --accent-deep: #cfe6f5;
+    --focus: #57bde9;
     --ok: #6fce9a;
+    --warn-ground: #2e2716;
+    --warn-line: #ecad0a;
   }
 }
 
@@ -79,6 +90,7 @@ a {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
 /* --- masthead ------------------------------------------------------------ */
@@ -94,10 +106,29 @@ a {
   background: var(--surface);
 }
 
+/* A hairline of brand colour under the bar, so the chrome reads as one piece
+   with the app bar above it rather than as two stacked strips. */
+.masthead::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  margin-top: -1.25rem;
+  background: linear-gradient(
+    90deg,
+    var(--brand-blue),
+    var(--brand-purple) 55%,
+    var(--brand-yellow)
+  );
+}
+
 .masthead h1 {
   margin: 0 0 0.25rem;
-  font-size: 1.25rem;
-  letter-spacing: -0.01em;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--accent-deep);
 }
 
 .masthead p {
@@ -115,9 +146,13 @@ a {
 button {
   font: inherit;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
   border: 1px solid transparent;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    filter 120ms ease;
 }
 
 .button-primary:disabled,
@@ -130,6 +165,7 @@ button {
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 600;
+  box-shadow: 0 1px 2px rgb(3 33 71 / 18%);
 }
 
 .button-secondary {
@@ -425,7 +461,7 @@ input:disabled {
 
 .preview-empty h2 {
   margin: 0 0 0.5rem;
-  color: var(--brand-navy);
+  color: var(--accent-deep);
   font-size: 1.125rem;
 }
 
@@ -525,7 +561,9 @@ input:disabled {
 }
 
 .document-page a {
-  color: #1f4b8f;
+  /* The brand navy. Fixed, like everything else on the page: this is the
+     document, which prints the same whatever the viewer's colour scheme. */
+  color: #032147;
 }
 
 /* Values filled in from the form, so the reader can see what changed. */
@@ -594,6 +632,26 @@ input:disabled {
 /* Leave room to sign by hand. */
 .document-page tbody tr:first-child td {
   height: 3.5rem;
+}
+
+/* Louder than the modification notice below it, and deliberately so: this is
+   the sentence that stops someone signing a generated document unreviewed. It
+   is inside .document-page, so it survives print - the whole point of it. */
+.document-page .draft-disclaimer {
+  margin: 0 0 1.5rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #ecad0a;
+  border-left-width: 4px;
+  border-radius: 4px;
+  background: #fdf4dd;
+  color: #4a3a05;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.45;
+  /* Keeps the tint when printing; the border and weight carry it alone in a
+     browser that strips print backgrounds anyway. */
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
 .document-page .modification-notice {
@@ -701,8 +759,11 @@ input:disabled {
 
 .login-card h1 {
   margin: 0.5rem 0 0.25rem;
-  color: var(--brand-navy);
+  /* Scheme-aware, unlike the wordmark above it. The fixed brand navy is
+     unreadable on the dark surface — near-black text on a near-black card. */
+  color: var(--accent-deep);
   font-size: 1.5rem;
+  letter-spacing: -0.015em;
 }
 
 .login-blurb {
@@ -785,6 +846,7 @@ input:disabled {
   .masthead,
   .pane-form,
   .preview-status,
+  .documents,
   .colophon {
     display: none !important;
   }
@@ -841,4 +903,80 @@ input:disabled {
     color: inherit;
     text-decoration: none;
   }
+}
+
+
+/* --- your documents ------------------------------------------------------ */
+
+.documents {
+  flex: 1;
+  max-width: 60rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.documents-status {
+  color: var(--ink-muted);
+}
+
+.document-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.85rem;
+}
+
+.document-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.document-card:hover {
+  border-color: var(--accent);
+  filter: none;
+}
+
+.document-card-title {
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--accent-deep);
+}
+
+.document-card-when {
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+}
+
+.preview-empty .button-primary {
+  margin-top: 1rem;
+}
+
+/* --- sign in and sign up ------------------------------------------------- */
+
+/* The tabs are the same control the creator uses to switch between chat and
+   fields, reused rather than restyled. Only the spacing differs, because here
+   they sit inside a card rather than above a pane. */
+.login-card .mode-switch {
+  margin: 0 0 1.25rem;
+}
+
+.login-card .field-label {
+  margin-top: 0.9rem;
+}
+
+.login-card .field-label:first-of-type {
+  margin-top: 0;
+}
+
+.login-card .field-hint {
+  margin: 0.35rem 0 0;
 }

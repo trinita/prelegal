@@ -14,7 +14,7 @@ import { defaultValues } from "@/lib/fields";
 import { MUTUAL_NDA_ID } from "@/lib/documents";
 import * as chat from "@/lib/chat";
 
-const onMnda = { documentId: MUTUAL_NDA_ID, values: defaultValues() };
+const onMnda = { documentId: MUTUAL_NDA_ID, recordId: null, values: defaultValues() };
 
 /** A panel already working on the Mutual NDA. */
 const panel = (props: Partial<Parameters<typeof ChatPanel>[0]> = {}) => (
@@ -162,7 +162,7 @@ describe("when the assistant settles on a document", () => {
 
     render(
       panel({
-        workspace: { documentId: null, values: {} },
+        workspace: { documentId: null, recordId: null, values: {} },
         onDocumentChosen,
         onChange,
       }),
@@ -183,7 +183,7 @@ describe("when the assistant settles on a document", () => {
     });
     const onDocumentChosen = vi.fn();
 
-    render(panel({ workspace: { documentId: null, values: {} }, onDocumentChosen }));
+    render(panel({ workspace: { documentId: null, recordId: null, values: {} }, onDocumentChosen }));
     type("I need an employment contract");
 
     expect(await screen.findByText(/employment contract/)).toBeTruthy();

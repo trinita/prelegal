@@ -16,6 +16,7 @@ import { standardTermsById } from "@/templates/sources";
 import { renderMarkdown } from "./markdown";
 import { blank, formatEffectiveDate, highlight, inlineText } from "./escape";
 import type { DocumentField, DocumentSpec, TermValues } from "./documents";
+import { draftDisclaimerHtml } from "./disclaimer";
 
 /**
  * Terms naming a party, most senior first.
@@ -152,6 +153,7 @@ export function renderTermsDocument(
   return {
     keyTermsHtml:
       renderMarkdown(keyTermsPage(document, values)) +
+      `\n${draftDisclaimerHtml()}` +
       `\n<p class="modification-notice">${modificationNotice(document)}</p>`,
     standardTermsHtml: renderMarkdown(markUpTerms(source, document)),
   };

@@ -26,6 +26,7 @@ export class ApiError extends Error {
 export interface User {
   id: number;
   name: string;
+  email: string;
 }
 
 /**
@@ -74,12 +75,85 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return (await response.json()) as T;
 }
 
-export const signIn = (name: string) =>
+export interface Credentials {
+  email: string;
+  password: string;
+}
+
+export const signIn = (credentials: Credentials) =>
   apiFetch<User>("/api/auth/login", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(credentials),
+  });
+
+export const signUp = (registration: Credentials & { name: string }) =>
+  apiFetch<User>("/api/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(registration),
   });
 
 export const signOut = () => apiFetch<void>("/api/auth/logout", { method: "POST" });
 
 export const fetchCurrentUser = () => apiFetch<User>("/api/auth/me");
+
+/**
+ * One turn of a saved conversation.
+ *
+ * Declared here rather than imported from `lib/chat.ts`, which already imports
+ * `apiFetch` from this module: taking its `ChatTurn` back would close a cycle.
+ * The two shapes are held to each other in `turn-drift.test.ts`, in both
+ * directions, because a duplicated shape is one that drifts.
+ */
+export interface SavedTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface DocumentSummary {
+  /** This saved document's own id — not the catalogue's `documentId`. */
+  id: number;
+  documentType: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentDetail extends DocumentSummary {
+  values: DocumentValues;
+  transcript: SavedTurn[];
+}
+
+/**
+ * A document's answers, as they travel over the wire.
+ *
+ * Deliberately `object` rather than `Record<string, unknown>`: the Mutual NDA's
+ * values are a declared interface, and an interface has no index signature, so
+ * the stricter type would reject the very shape this is for. What is inside is
+ * the catalogue's business, not this module's.
+ */
+export type DocumentValues = object;
+
+export const listDocuments = () => apiFetch<DocumentSummary[]>("/api/documents");
+
+export const fetchDocument = (id: number) =>
+  apiFetch<DocumentDetail>(`/api/documents/${id}`);
+
+export const createDocument = (documentType: string) =>
+  apiFetch<DocumentDetail>("/api/documents", {
+    method: "POST",
+    body: JSON.stringify({ documentType }),
+  });
+
+/**
+ * Saves whichever halves are given. The chat writes the transcript and the
+ * form writes the values, and neither has to send the other's state back to
+ * leave it undisturbed.
+ */
+export const saveDocument = (
+  id: number,
+  patch: { values?: DocumentValues; transcript?: SavedTurn[] },
+) =>
+  apiFetch<DocumentDetail>(`/api/documents/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(patch),
+  });

@@ -17,6 +17,7 @@
 import { coverPageSource, standardTermsSource } from "@/templates/sources";
 import { escapeHtml, renderMarkdown } from "./markdown";
 import { BLANK, blank, formatEffectiveDate, highlight, inlineText } from "./escape";
+import { draftDisclaimerHtml } from "./disclaimer";
 
 export { formatEffectiveDate };
 import { isPositiveNumber, type MndaValues, type Party } from "./fields";
@@ -240,6 +241,7 @@ export interface RenderedDocument {
 export function renderDocument(values: MndaValues): RenderedDocument {
   const coverPage =
     renderMarkdown(fillCoverPage(values)) +
+    `\n${draftDisclaimerHtml()}` +
     `\n<p class="modification-notice">${MODIFICATION_NOTICE}</p>`;
 
   return {

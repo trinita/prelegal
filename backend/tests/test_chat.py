@@ -9,12 +9,6 @@ from app.ai.client import AiUnavailable
 from app.routers import chat
 
 
-@pytest.fixture
-def signed_in(client: TestClient) -> TestClient:
-    client.post("/api/auth/login", json={"name": "Ada Lovelace"})
-    return client
-
-
 def stub_model(monkeypatch: pytest.MonkeyPatch, answer: dict[str, Any]) -> list[list]:
     """Replace the model call, capturing the messages it was sent.
 

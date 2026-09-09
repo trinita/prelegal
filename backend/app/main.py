@@ -15,7 +15,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import Settings, get_settings
 from app.database import build_engine, reset_database
-from app.routers import auth, chat, health
+from app.routers import auth, chat, documents, health
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(chat.router)
+    app.include_router(documents.router)
 
     # Mounted last: a mount at "/" matches every path, so the API routes above
     # must be registered first to keep their claim on /api.

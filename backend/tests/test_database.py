@@ -5,23 +5,27 @@ from sqlalchemy import inspect
 
 from app.config import Settings
 from app.main import create_app
+from tests.conftest import ACCOUNT
 
 
-def test_starting_up_creates_the_users_table(settings: Settings) -> None:
+def test_starting_up_creates_every_table(settings: Settings) -> None:
     with TestClient(create_app(settings)) as client:
-        engine = client.app.state.engine
+        tables = inspect(client.app.state.engine).get_table_names()
 
-        assert "users" in inspect(engine).get_table_names()
+        assert {"users", "sessions", "documents"} <= set(tables)
 
 
-def test_restarting_discards_existing_data(settings: Settings) -> None:
+def test_restarting_discards_accounts_and_their_documents(settings: Settings) -> None:
+    """The ticket allows this, and the interface says so rather than pretending."""
     with TestClient(create_app(settings)) as client:
-        client.post("/api/auth/login", json={"name": "Ada Lovelace"})
+        client.post("/api/auth/signup", json=ACCOUNT)
+        client.post("/api/documents", json={"documentType": "mutual-nda"})
 
     # A second app against the same file: the container coming back up.
     with TestClient(create_app(settings)) as client:
-        client.cookies.clear()
-
         assert client.get("/api/auth/me").status_code == 401
-        # And the name is free again, so it lands on a fresh row.
-        assert client.post("/api/auth/login", json={"name": "Ada"}).json()["id"] == 1
+
+        # The address is free again, so it lands on a fresh row.
+        again = client.post("/api/auth/signup", json=ACCOUNT)
+        assert again.json()["id"] == 1
+        assert client.get("/api/documents").json() == []

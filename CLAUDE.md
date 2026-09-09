@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-All eleven document types are supported, filled in by chatting with an assistant. Real authentication is still to build — see Implementation Status at the end of this file for what is actually in the repository.
+All eleven document types are supported, filled in by chatting with an assistant. Accounts are real as of PL-10, and each user's documents are saved for as long as the server runs — see Implementation Status at the end of this file for what is actually in the repository.
 
 ## Development process
 
@@ -72,16 +72,23 @@ here has not been built yet.
 - The database is dropped and recreated on every start, so nothing in it is durable
 - Next.js static export served by FastAPI, so the whole product is on http://localhost:8000
 - **Fake login only.** A name is exchanged for a session cookie; there are no
-  passwords, the cookie is unsigned, and anyone can forge it. See
-  `backend/app/session.py`. Real authentication is PL-10.
+  passwords, the cookie is unsigned, and anyone can forge it. Superseded by
+  PL-10: `backend/app/session.py` no longer exists, and `backend/app/sessions.py`
+  replaced it.
 - Start and stop scripts for Mac, Linux and Windows
 - The NDA creator itself is unchanged, now behind the login
 - 16 backend tests and 85 frontend tests at the time
 
 ### Current API Endpoints
-- `POST /api/auth/login` — exchange a name for a session (creates the user if new)
-- `POST /api/auth/logout` — clear the session cookie
+- `POST /api/auth/signup` — register, and sign in
+- `POST /api/auth/login` — email and password for a session
+- `POST /api/auth/logout` — delete the session and clear the cookie
 - `GET /api/auth/me` — the signed-in user, or 401
+- `GET /api/documents` — this user's documents, most recently updated first
+- `POST /api/documents` — start one, by catalogue document type
+- `GET /api/documents/{id}` — one document, with its values and transcript
+- `PUT /api/documents/{id}` — save values, transcript, or both
+- `POST /api/chat/message` — one turn of the conversation
 - `GET /api/health` — health check, used by the container healthcheck and start scripts
 
 ### Completed (PL-8) — AI chat
@@ -112,9 +119,34 @@ here has not been built yet.
   not another's
 - 77 backend tests and 213 frontend tests
 
+### Completed (PL-10) — accounts, saved documents, and polish
+- Real sign-up and sign-in: email and password, hashed with `hashlib.scrypt`
+- The session cookie holds a random token, looked up by SHA-256 hash in a
+  `sessions` table. Signing out deletes the row, so it revokes rather than only
+  clearing the cookie
+- **No new backend dependency.** Both the hashing and the session mechanism come
+  from the standard library, keeping the backend at five runtime dependencies
+- Every document is saved to the account that made it, automatically: a row is
+  created when the assistant settles on a document, and values and transcript
+  are written after 800ms of quiet
+- *Your documents* lists them, most recently worked on first. Opening one
+  restores its values **and its conversation**, so the assistant still knows what
+  was said
+- A draft disclaimer is rendered into the document itself, so it survives to the
+  PDF — the same mechanism as the CC BY modification notice, and equally never
+  written into the Standard Terms
+- The application chrome now uses the project's palette; `--accent` was
+  `#1f4b8f`, a colour in no part of the brand
+- The local draft is cleared on every change of signed-in user, and signing in
+  lands on the documents list. Without both, one person's half-typed agreement
+  was waiting for the next person on a shared browser
+- **The database is still dropped on every start**, as the ticket allows. The
+  sign-in screen and the documents list both say so
+- 121 backend tests and 279 frontend tests
+
 ### Planned
-- **PL-10** — real authentication (email, password hashing, tokens) and document
-  persistence per user
+- Durable storage: whichever ticket makes saved documents outlive a restart is
+  the one that should add Alembic and a volume
 
 ## Repository layout
 
@@ -137,8 +169,8 @@ Each half has its own README covering architecture and tests.
 scripts/start-mac.sh              # whole product on http://localhost:8000
 scripts/stop-mac.sh
 
-cd backend  && uv run pytest      # 77 tests
-cd frontend && npm test           # 213 tests
+cd backend  && uv run pytest      # 121 tests
+cd frontend && npm test           # 279 tests
 ```
 
 For frontend work, `npm run dev` serves pages on :3000 and calls the API on
@@ -147,20 +179,36 @@ There is nothing to configure.
 
 ## Constraints worth knowing before changing things
 
-- **The login is not authentication.** A name is exchanged for an unsigned,
-  forgeable cookie. This is deliberate and documented in
-  `backend/app/session.py`; PL-10 replaces that module. Do not build anything
-  that treats the session as a security boundary.
+- **The session is a real one, but the store is not durable.** PL-10 replaced
+  `app/session.py` with `app/sessions.py`: a random token, stored hashed, that
+  cannot be forged by hand. It is still a session in a database that is dropped
+  on every start, so everyone is signed out by a restart.
 - **The database does not survive a restart.** Every start drops the schema and
-  recreates it, and no volume is mounted. Whichever ticket introduces data worth
-  keeping should add Alembic and a volume at the same time.
+  recreates it, and no volume is mounted. PL-10 was allowed to save documents
+  into it anyway, on the ticket's own terms; the interface says so in two places
+  rather than implying a durability that is not there. Whichever ticket makes
+  that data worth keeping should add Alembic and a volume at the same time.
+- **Never fetch a saved document by id alone.** `app/documents.py` filters on the
+  owner inside the query, and offers no function that does not, so a route
+  cannot forget. Another user's document must read as 404, never 403: a 403
+  confirms the row exists.
+- **Both sign-in branches must hash a password.** `authenticate_user` verifies
+  against `_ABSENT_USER_HASH` when the address is unknown. Without it the reply
+  is identical but the timing is not — an unknown address was refused about 300
+  times faster than a real one with a wrong password, which enumerates accounts
+  just as well as a different error message would.
+- **A debounced save is flushed on unmount, never cancelled.** Leaving the
+  editor within the 800ms window is exactly when an edit is still pending;
+  cancelling discards it, and reopening the document then fetches the older
+  version back from the server without a word.
 - **The legal text is the product.** `templates/` is the single source of truth;
   `frontend/src/templates/sources.ts` is generated at build time and git-ignored.
   Change wording in `templates/` only.
 - **Never substitute a value into Standard Terms.** Those clauses are written to
   read with the defined term — "during the Pilot Period" — so putting the value
   there breaks sentences and alters the legal wording. Values belong on the
-  cover page or the generated key terms page.
+  cover page or the generated key terms page. The same holds for the draft
+  disclaimer: it goes on the generated page, which is the app's own text.
 - **New tests must be shown failing first.** Two tests written for this project
   passed against broken code until they were checked that way. Mutate the code,
   confirm the test fails for the right reason, then restore.

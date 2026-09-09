@@ -10,12 +10,6 @@ from app.config import Settings
 from app.routers import chat
 
 
-@pytest.fixture
-def signed_in(client: TestClient) -> TestClient:
-    client.post("/api/auth/login", json={"name": "Ada Lovelace"})
-    return client
-
-
 def stub(monkeypatch: pytest.MonkeyPatch, answer: dict[str, Any]) -> list[list]:
     sent: list[list] = []
 

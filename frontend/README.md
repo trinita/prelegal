@@ -7,7 +7,43 @@ Implements [PL-6](https://trinitadewanti.atlassian.net/browse/PL-6), behind the
 login added in [PL-7](https://trinitadewanti.atlassian.net/browse/PL-7), driven
 by the chat added in [PL-8](https://trinitadewanti.atlassian.net/browse/PL-8),
 across all eleven documents since
-[PL-9](https://trinitadewanti.atlassian.net/browse/PL-9).
+[PL-9](https://trinitadewanti.atlassian.net/browse/PL-9), and saved to an account
+since [PL-10](https://trinitadewanti.atlassian.net/browse/PL-10).
+
+## Three screens
+
+`src/app/page.tsx` switches between them on the signed-in state and one piece of
+view state. There is no router: a static export has to redirect on the client,
+which shows the wrong screen for a frame, and none of these needs a URL of its
+own.
+
+1. **`AuthScreen`** — sign in, or register.
+2. **`DocumentsScreen`** — what this account has drafted. Where signing in lands,
+   both because it is what the ticket asks people to look back at and because on
+   a shared browser it opens on your own documents rather than on whatever the
+   last person left half-finished.
+3. **`DocumentCreator`** — the conversation and the document, as before.
+
+## Saving
+
+`Workspace` carries a `recordId` — the saved document's own id, kept distinct
+from `documentId`, which says which of the eleven templates is being drafted.
+
+A document is recorded as soon as the assistant settles on one. After that,
+every change writes to `localStorage` immediately and to the server 800ms after
+the typing stops: the local copy is what survives a refresh mid-sentence, and
+only the request needs rationing. `ChatPanel` saves its own transcript the same
+way, which is what lets a reopened document carry on the conversation.
+
+Pending saves are **flushed** when a component unmounts, not cancelled. Leaving
+the editor within the debounce window is precisely when an edit is still
+waiting, and cancelling there loses it silently — reopening the document would
+fetch the older version back from the server with nothing said.
+
+The local draft is cleared on every change of signed-in user — but deliberately
+not when an existing session is restored on page load, so refreshing keeps what
+you were working on. Without that, signing out and handing over the laptop left
+one person's half-typed agreement waiting for the next.
 
 ## Running it
 
@@ -47,24 +83,32 @@ export in `out/`, which is what FastAPI serves in the container.
                                    │  GET /api/auth/me
                                    ▼
               app/page.tsx ── checking? ──> splash
-                            ── signed out? ──> LoginScreen
-                            ── signed in? ──> AppShell > NdaCreator
-                                                            │
+                            ── signed out? ──> AuthScreen
+                            ── signed in? ──> AppShell > DocumentsScreen
+                                                       │       │ GET /api/documents
+                                                       │       │ open one ─┐
+                                                       └──> DocumentCreator <┘
+                                                            │  GET /api/documents/{id}
                     ChatPanel ──POST /api/chat/message──> reply + values
-                       or NdaForm ("Edit fields")          │
-                                              both setValues
+                       or NdaForm/TermsForm ("Edit fields") │
+                                              both setWorkspace
+                                                            │ 800ms after the
+                                                            ▼ typing stops
+                                          PUT /api/documents/{id}  (values)
+                                          PUT /api/documents/{id}  (transcript)
+
 templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
                                               │             │
         src/lib/fields.ts (schema) ───────────┤             │
                                               ▼             ▼
    NdaForm ──values──> src/lib/render.ts ──> markdown.ts ──> DocumentPreview
-                                                                    │
+                       (+ lib/disclaimer.ts)                        │
                                                           print stylesheet → PDF
 ```
 
-- **`app/page.tsx`** picks between the login screen and the platform. It is one
-  page rather than a `/login` route because a static export has to redirect on
-  the client, which shows the wrong screen for a frame.
+- **`app/page.tsx`** picks between the sign-in screen, the documents list and
+  the creator. It is one page rather than three routes because a static export
+  has to redirect on the client, which shows the wrong screen for a frame.
 - **`lib/api.ts`** is the only place that calls the backend. Every request sends
   credentials, so the session cookie travels in both the same-origin and the
   split dev setup.
@@ -97,7 +141,7 @@ templates/*.md ──sync-templates.mjs──> src/templates/sources.ts
 npm test
 ```
 
-213 tests, run with [Vitest](https://vitest.dev), covering the document-generation
+279 tests, run with [Vitest](https://vitest.dev), covering the document-generation
 logic — the part where a defect ends up in a signed agreement — and the code
 that talks to the backend:
 
@@ -141,14 +185,34 @@ that talks to the backend:
 - **`documents-drift.test.ts`** — `documents.json` against the templates, in
   both directions. A clause referring to a term nobody is asked about fails, and
   so does asking about a term no clause mentions.
+- **`disclaimer.test.ts`** — the draft notice reaches every document's generated
+  page, and reaches no document's Standard Terms. It asserts against the
+  rendered HTML rather than the screen, because that HTML is the only part that
+  survives printing, and the PDF is where the warning has to be.
+- **`workspace.test.ts`** — a record id is not a document id, and a saved
+  document restores with the template defaults it was saved without.
+- **`debounce.test.ts`** — a burst collapses to one call, the wait restarts on
+  each call, and a cancelled call never runs.
+- **`AuthScreen.test.tsx`** — the two modes send to two different endpoints, a
+  sign-in error does not follow the user into registering, and a password too
+  short for the server to accept is refused before it is sent.
+- **`DocumentsScreen.test.tsx`** — the list, the empty state, and a failure that
+  offers a retry that actually asks again.
+- **`DocumentCreator.test.tsx`** — a document is recorded once and only once,
+  answers are saved when the typing stops rather than on every keystroke, a
+  reopened document brings its conversation back, and a server that cannot be
+  reached leaves the agreement on screen and printable.
+- **`page.test.tsx`** — signing in lands on the documents list, and signing out
+  puts the view back so the next person does not land in the editor.
 
 Component tests run under jsdom, opted into per file with a
 `// @vitest-environment jsdom` docblock so the rest of the suite stays on the
-faster node environment.
+faster node environment. `DocumentCreator.test.tsx` renders one case inside
+`StrictMode`, since that is what `next.config.ts` turns on and it is how a
+duplicate document would most plausibly appear.
 
-Not yet covered: the login screen and the auth gate, print output, and
-cross-browser behaviour. Those still need a person, or tests written in the
-style of `ChatPanel.test.tsx`.
+Not yet covered: print output and cross-browser behaviour. Those still need a
+person, or a browser-based runner.
 
 ## The templates are not stored here
 

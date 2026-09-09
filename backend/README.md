@@ -5,7 +5,10 @@ container it does two jobs: it answers the JSON API under `/api`, and it serves
 the frontend's static build for everything else — which is why the whole product
 lives on http://localhost:8000 rather than on two ports.
 
-Implements [PL-7](https://trinitadewanti.atlassian.net/browse/PL-7).
+Implements [PL-7](https://trinitadewanti.atlassian.net/browse/PL-7), the chat in
+[PL-8](https://trinitadewanti.atlassian.net/browse/PL-8) and
+[PL-9](https://trinitadewanti.atlassian.net/browse/PL-9), and accounts and saved
+documents in [PL-10](https://trinitadewanti.atlassian.net/browse/PL-10).
 
 ## Running it
 
@@ -36,10 +39,12 @@ pages on :3000 and calls across to :8000.
 | `app/config.py` | Settings, all overridable by `PRELEGAL_*` environment variables |
 | `app/database.py` | Engine and the drop-and-recreate on start-up |
 | `app/dependencies.py` | The request-scoped session and settings |
-| `app/models.py` | SQLAlchemy models — just `User` so far |
+| `app/models.py` | SQLAlchemy models: `User`, `AuthSession`, `SavedDocument` |
 | `app/schemas.py` | Request and response bodies |
-| `app/session.py` | The fake session (read the docstring) |
-| `app/users.py` | Finding a user by name, and creating one on first sight |
+| `app/sessions.py` | Session tokens, and the cookie that carries one |
+| `app/security.py` | Password hashing, with `hashlib.scrypt` |
+| `app/users.py` | Registering an account, and checking a password |
+| `app/documents.py` | Saved documents, always scoped to their owner |
 | `documents.json` | The ten documents besides the MNDA, and the terms each one's clauses reference |
 
 A handful of fields carry `"referenced": false`: no clause links to them, but the
@@ -47,7 +52,7 @@ document is unusable without them. Common Paper expects a separate Order Form to
 state the price and name the product; this app generates one page, so those
 fields live here instead.
 | `app/ai/` | The assistant: catalogue, field schema, prompts, the model call, and merging its answer |
-| `app/routers/` | `auth.py`, `chat.py` and `health.py` |
+| `app/routers/` | `auth.py`, `chat.py`, `documents.py` and `health.py` |
 
 The engine is built inside `create_app` rather than at import time, and both the
 engine and the settings are published on `app.state`, so everything a request
@@ -61,18 +66,60 @@ app a non-default cookie name.
 `reset_database` drops every table and recreates it during start-up, so each
 container start begins empty and nothing is carried over. There is no migration
 tool because there is nothing to migrate: while the schema is still moving, a
-guaranteed-clean start is worth more than durable data. Whichever ticket
-introduces data worth keeping is the one that should add Alembic and a volume.
+guaranteed-clean start is worth more than durable data.
 
-## The login is not authentication
+PL-10 saves accounts and documents into it regardless, which the ticket asked
+for explicitly. The consequence — a restart signs everyone out and takes their
+documents with it — is stated on the sign-in screen and above the documents
+list, so it is a known limitation rather than a surprise. Whichever ticket makes
+that data worth keeping is the one that should add Alembic and a volume.
 
-`POST /api/auth/login` takes a name, finds or creates that user, and sets a
-cookie holding their id. Nothing is verified. The cookie is unsigned, so anyone
-can set it by hand and become any user.
+## Saved documents
 
-This is deliberate: PL-7 asks for a fake login, and a fake session carrying a
-real-looking signature would invite the next reader to trust it. PL-10 replaces
-`app/session.py` wholesale with password checking and signed tokens.
+`POST /api/documents` starts one; `PUT /api/documents/{id}` writes its values,
+its transcript, or both, leaving whichever half was not sent alone. The browser
+decides when to save, because a document changes both by talking to the
+assistant and by typing into the form, and only one of those goes through the
+chat endpoint — persisting from there would have left every hand-typed
+correction unsaved. `app/routers/chat.py` therefore stores nothing at all, and
+no longer takes a database session.
+
+Every function in `app/documents.py` takes the owner and filters on it inside the
+query. There is no function that fetches a document by id alone, so a route has
+nothing to reach for that would skip the check. Another user's document answers
+404, never 403: a 403 would confirm the row exists.
+
+## Signing in
+
+An account is an email address, a display name and a password. The password is
+hashed with `hashlib.scrypt` — memory-hard, from the standard library, with the
+cost parameters written into each stored hash so raising them later does not
+invalidate what is already there.
+
+The cookie holds a random 256-bit token. Only its SHA-256 is stored, so a copy
+of the `sessions` table hands out no live sessions, and a token nobody issued
+matches nothing. Signing out deletes the row, which is what makes it a
+revocation rather than a request that the browser forget something.
+
+An unsalted SHA-256 is right for the token and would be quite wrong for the
+password: the token is already high-entropy random, so there is nothing to guess
+at and nothing for stretching to slow down.
+
+Both mechanisms are deliberately dependency-free. The backend has five runtime
+dependencies, all of them things it cannot run without, and a password hasher is
+not in that category — `app/security.py` is short enough to read start to finish,
+with no library defaults to take on trust.
+
+An unknown address and a wrong password produce the same 401 and the same
+sentence. Distinguishing them would turn the sign-in form into a way to ask
+which addresses have accounts here.
+
+Saying the same thing is not sufficient on its own. scrypt is deliberately slow,
+so returning as soon as the address is not found refused an unknown address
+about 300 times faster than a real one with the wrong password — identical
+words, and a clock that gave the answer away. `authenticate_user` therefore
+verifies against a hash belonging to nobody on that branch, so both cost the
+same.
 
 ## The assistant
 
@@ -135,6 +182,7 @@ open to anyone who can reach the port.
 | `PRELEGAL_STATIC_DIR` | `backend/static` | The built frontend; skipped if absent |
 | `PRELEGAL_DEV_ORIGINS` | `["http://localhost:3000", "http://127.0.0.1:3000"]` | Origins allowed to call the API with credentials |
 | `PRELEGAL_SESSION_COOKIE_NAME` | `prelegal_session` | Session cookie name |
+| `PRELEGAL_SESSION_MAX_AGE_SECONDS` | 30 days | How long the cookie is offered for. The session ends with the database either way |
 | `OPENROUTER_API_KEY` | none | The assistant's key. Without it, chat returns 503 and the rest of the app is unaffected. |
 | `PRELEGAL_FIELDS_PATH` | `mnda-fields.json` at the repo root | The Mutual NDA's cover page fields |
 | `PRELEGAL_DOCUMENTS_PATH` | `documents.json` at the repo root | The other ten documents |
@@ -149,14 +197,25 @@ open to anyone who can reach the port.
 uv run pytest
 ```
 
-77 tests. No test makes a network call: the model is stubbed.
+121 tests. No test makes a network call: the model is stubbed.
 
-- The fake login, and the session cookie's edge cases — a cookie naming a user
-  who no longer exists, a malformed one.
+- Password hashing: a password verifies against its own hash and nothing else,
+  the same password hashes differently every time, the parameters travel with
+  the hash, and an unreadable stored value is a mismatch rather than a crash.
+- Registering and signing in: a duplicate address is refused, an address is
+  matched regardless of case, a wrong password and an unknown address are
+  refused in the same words, and two people may share a display name.
+- The session: a hand-written cookie and a tampered token both sign nobody in,
+  the raw token is not what is stored, signing out deletes the row rather than
+  only the cookie, and signing out of one browser leaves another signed in.
+- Saved documents: values and transcript save independently, an empty save is
+  refused, the list is ordered and scoped to its owner, a second document of the
+  same kind is numbered, and another account's document is 404 on both read and
+  write.
 - The two properties the database is supposed to have: the schema exists after
-  start-up, and a restart discards what came before.
-- The race two simultaneous first-time logins under the same name would
-  otherwise lose.
+  start-up, and a restart discards accounts and their documents alike.
+- The race two simultaneous registrations of the same address would otherwise
+  lose.
 - What the assistant is allowed to write into the document: nulls and blanks
   leave values alone, a state outside the list is dropped, a year count that is
   not a positive whole number is dropped, and an invented field name is ignored.

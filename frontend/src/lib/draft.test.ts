@@ -10,6 +10,7 @@ const LEGACY_KEY = "prelegal.mnda.draft.v1";
 /** A Mutual NDA workspace, which is what most of these tests are about. */
 const mnda = (overrides: Record<string, unknown> = {}) => ({
   documentId: MUTUAL_NDA_ID,
+  recordId: null,
   values: { ...defaultValues(), ...overrides },
 });
 
@@ -48,7 +49,11 @@ describe("round trip", () => {
 
   it("restores a document that is not the Mutual NDA", () => {
     useStorage();
-    const workspace = { documentId: "pilot-agreement", values: { provider: "Acme" } };
+    const workspace = {
+      documentId: "pilot-agreement",
+      recordId: null,
+      values: { provider: "Acme" },
+    };
 
     saveDraft(workspace);
 

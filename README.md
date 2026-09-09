@@ -78,31 +78,39 @@ signed agreement. `documents.json` is checked against the templates themselves,
 in both directions: a clause referring to a term nobody is asked about fails,
 and so does asking about a term no clause mentions.
 
-## Signing in
+## Signing in, and your documents
 
-There is no authentication yet. The login screen takes a name, and the backend
-turns it into a user and a session cookie without checking anything — the cookie
-is unsigned and trivially forgeable. It exists so the shape of the product is
-right, and so the database is exercised end to end; real credentials arrive with
-PL-10. The database is also rebuilt from scratch every time the container
-starts, so no account and nothing saved outlives a restart.
+Registering takes a name, an email address and a password. The password is
+stored as an `scrypt` hash, and the session cookie holds a random token that is
+looked up, by hash, in the database — so a cookie written by hand signs nobody
+in, and signing out deletes the token rather than merely forgetting it.
+
+Every agreement is saved to the account that made it, without being asked: a
+document is recorded once the assistant has settled on what you need, and its
+answers and conversation are written as you go. *Your documents* lists them, and
+opening one puts you back where you left off, assistant included.
+
+The database is still rebuilt from scratch every time the container starts, so
+no account and nothing saved outlives a restart. That is a deliberate limit
+while the schema is still moving, and the app says so on the way in and on the
+list itself rather than letting anyone discover it by losing something.
 
 ## Testing
 
 ```bash
-cd frontend && npm test          # 213 Vitest tests
-cd backend && uv run pytest      # 77 pytest tests
+cd frontend && npm test          # 279 Vitest tests
+cd backend && uv run pytest      # 121 pytest tests
 ```
 
 The frontend suite covers the document-generation logic in
 `frontend/src/lib/*.test.ts` — the code that decides what a signed agreement
 says, so it is where a defect matters most; several tests exist because the bug
 they describe actually occurred and reached review — plus the API client. The
-backend suite covers the fake login, the session cookie's edge cases, the
-promise that a restart leaves an empty database, the race between two
-simultaneous first-time logins under the same name, what the assistant is
-allowed to write into a document, and how it chooses one. No test calls the
-model.
+backend suite covers registering and signing in, password hashing, the session
+token's edge cases — including that a hand-written cookie and a tampered token
+are both refused — the promise that a restart leaves an empty database, that one
+account cannot read or write another's documents, what the assistant is allowed
+to write into a document, and how it chooses one. No test calls the model.
 
 New tests are expected to be shown failing before the fix that makes them pass.
 A test that has never failed for the right reason has not been demonstrated to
@@ -114,7 +122,7 @@ and still need a browser-based runner.
 
 ## Status
 
-Early. Two slices exist so far.
+Five slices exist so far.
 
 The Mutual NDA creator ([PL-6](https://trinitadewanti.atlassian.net/browse/PL-6))
 turns a form into a signable document: live preview, print to PDF, entirely in
@@ -134,7 +142,16 @@ are now supported. Only the Mutual NDA has a published cover page, so for the
 other ten the app generates the key terms page their clauses refer to and
 appends the standard terms unchanged.
 
-Still to come: authentication is still a placeholder.
+Accounts and saved documents ([PL-10](https://trinitadewanti.atlassian.net/browse/PL-10))
+replace the placeholder login with a real one: registering with an email address
+and a password, and a session cookie carrying a token that cannot be forged by
+hand. Every agreement is saved to the account that made it as it is drafted, and
+reopening one brings back its conversation as well as its answers. Each document
+carries a notice that it is a draft for review, on screen and in the PDF.
+
+Still to come: saved documents do not outlive the server. The database is still
+rebuilt on every start, which the sign-in screen and the documents list both say
+plainly.
 
 ## Licence
 
